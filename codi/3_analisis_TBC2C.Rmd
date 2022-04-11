@@ -673,6 +673,8 @@ summary(fit4)
 cox.zph(fit4)
 
 
+plot(cox.zph(fit4))
+
 
 ```
 
