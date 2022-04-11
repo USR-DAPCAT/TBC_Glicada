@@ -164,51 +164,22 @@ rmarkdown::render("./codi/2_preparacio_TBC.Rmd",params = list(metode=metode))
 
 
 ###########   Generar informe 
-#subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
-#rmarkdown::render("./codi/3_analisis_TBC.Rmd", 
-#                  output_file = paste0("informe_Cohort_Din_Pob1_",Sys.Date()),
-#                  output_dir = "codi/informes",
-#                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
-#                  envir = parent.frame() # Truc per que render dins funció no peti 
-#)
-
-
-###########   Generar informe 
-#subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
-#rmarkdown::render("./codi/3_analisis_TBC2.Rmd", 
-#                  output_file = paste0("informe_Cohort_Din_Pob2_",Sys.Date()),
-#                  output_dir = "codi/informes",
-#                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
-#                  envir = parent.frame() # Truc per que render dins funció no peti 
-#)
-
-
-
-
-###########   Generar informe 
 subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
 rmarkdown::render("./codi/3_analisis_TBC2B.Rmd", 
-                  output_file = paste0("informe_Cohort_Din_POBLACIO_",Sys.Date()),
+                  output_file = paste0("Informe_Cohort_Din_POBLACIO_",Sys.Date()),
                   output_dir = "resultats",
                   params=list(metode=metode,subtitul=subtitul, test=FALSE),
                   envir = parent.frame() # Truc per que render dins funció no peti 
 )
 
-
-
-#JOSEP--->Taula Baseline characteristics of the study variables between diabetics with and without TB!!
-
-
 ###########   Generar informe 
-#subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
-#rmarkdown::render("./codi/3_analisis_TBC3.Rmd", 
-#                  output_file = paste0("informe_Cohort_Din_Pob3_",Sys.Date()),
-#                  output_dir = "codi/informes",
-#                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
-#                  envir = parent.frame() # Truc per que render dins funció no peti 
-#)
-
-
+subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
+rmarkdown::render("./codi/3_analisis_TBC2C.Rmd", 
+                  output_file = paste0("Informe_Cohort_Din_Dependent_Temps_POBLACIO_",Sys.Date()),
+                  output_dir = "resultats",
+                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
+                  envir = parent.frame() # Truc per que render dins funció no peti 
+)
 
 
 
@@ -238,19 +209,22 @@ rmarkdown::render("./codi/2_preparacio_TBC.Rmd",params = list(metode=metode))
 metode="dinamica2"
 subtitul="Cohorte DINÁMICA: Controles sin reemplazo una MUESTRA!"
 rmarkdown::render("./codi/3_analisis_TBC2B.Rmd", 
-                  output_file = paste0("informe_Cohort_Din_MOSTRA_",Sys.Date()),
+                  output_file = paste0("Informe_Cohort_Din_MOSTRA_",Sys.Date()),
                   output_dir = "resultats",
                   params=list(metode=metode,subtitul=subtitul, test=TRUE),
                   envir = parent.frame() # Truc per que render dins funció no peti 
 )
 
+
 #gc()
 ###########   Generar informe 
-#metode="dinamica2"
-#subtitul="Cohorte DINÁMICA: Controles sin reemplazo una MUESTRA!"
-#rmarkdown::render("./codi/3_analisis_TBC3.Rmd", 
-#                  output_file = paste0("informe_Cohort_Din_Muestra2_",Sys.Date()),
-#                  output_dir = "codi/informes",
-#                  params=list(metode=metode,subtitul=subtitul, test=TRUE),
-#                  envir = parent.frame() # Truc per que render dins funció no peti 
-#)
+metode="dinamica2"
+subtitul="Cohorte DINÁMICA: Controles sin reemplazo una MUESTRA!"
+rmarkdown::render("./codi/3_analisis_TBC2C.Rmd", 
+                  output_file = paste0("Informe_Cohort_Din_Dependent_Temps_MOSTRA_",Sys.Date()),
+                  output_dir = "resultats",
+                  params=list(metode=metode,subtitul=subtitul, test=TRUE),
+                  envir = parent.frame() # Truc per que render dins funció no peti 
+)
+
+
