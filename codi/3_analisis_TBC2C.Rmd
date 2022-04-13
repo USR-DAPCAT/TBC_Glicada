@@ -192,35 +192,42 @@ Analitica_Temps<-function(
   dataini="dat",
   datasort="datafi",
   endpt="situacio",
-  bd.dindex="20000101"
+  bd.dindex="dtindex"
   #
   #
 ) 
 {
   
-  #dt=dt_variables2 
+  
+  #dt=dt_variables2   
   #grup="HBA1c"
   #dataini="dat"
   #datasort="datafi"
   #endpt="situacio"
-  #bd.dindex=dt_variables2$dtindex  
+  #bd.dindex="dtindex"
   
+  #bd.dindex=dt_variables2$dtindex 
+
   # sempre la nostra b.d- analitica , ha de tenir: [idp,cod,val], 
   # també, dataInici?,dataSortida?,endPoint?, i dt_index? [qualsevol nom] 
   # sym(!!, treus les ""
   
   #hem posat sexe , s'ha de treure : 26.3.2021!!
   
-  dt<-dt%>%select(idp,cod,val,sym(!!dataini),sym(!!datasort),sym(!!endpt))
+  dt<-dt%>%select(idp,cod,val,sym(!!dataini),sym(!!datasort),sym(!!endpt),sym(!!bd.dindex),HBA1c.valor)
   dt<-dt%>%arrange(idp,!!dataini)
+  
+  
+  
+  #bd.dindex=dt$dtindex
   
   #
   dataini<-rlang::sym(dataini)
   datasort<-rlang::sym(datasort)
   #
   
-  print("Afegint data index en Analitca depenent del Temps")
-  dt<-afegir_dataindex(dt,bd.dindex)
+  #print("Afegint data index en Analitca depenent del Temps")
+  #dt<-afegir_dataindex(dt,bd.dindex)
   
   dt<-dt%>%filter(cod==!!grup)
   #
@@ -247,7 +254,7 @@ Analitica_Temps<-function(
   
   #
   #
-  #
+  # fins aqui BE!!!
   print("Calculem el temps!!!")
   dt<-dt%>%dplyr::group_by(idp)%>%mutate(T1=dat2-lag(dat2))%>%ungroup() 
   dt$T1<-as.double(dt$T1)
@@ -285,7 +292,12 @@ Analitica_Temps<-function(
   dt
 }
 
-
+  #dt=dt_variables2   
+  #grup="HBA1c"
+  #dataini="dat"
+  #datasort="datafi"
+  #endpt="situacio"
+  #bd.dindex="dtindex"
 
 ```
 
@@ -301,10 +313,11 @@ Analitica_Temps<-function(
 #############
 
 # eps només son diabetics!!!
-dades<-dadesDM
+#dades$dtindex
 
 # construim una nova base de dades a partir de "dades", per aplicar la FUNCIO ANALITICA.
 
+dades<-dadesDM
 
 dades$dtindex2<-as.character(dades$dtindex)
 dades$any_index<-substr(dades$dtindex2,1,4)
@@ -318,8 +331,9 @@ dades2<-dades%>%select(idp,sexe,edat)
 #dades_analitiques_DM<-dades%>%filter(grup=="Diabetis")
 
 dt_variables2<-dt_variables%>%mutate(idp=CIP)%>%select(-CIP)%>%left_join(dades,by="idp")%>%
-  select(idp,sexe,dtindex,cod,dat,val,situacio,datafi,EV.TBC)
+  select(idp,sexe,dtindex,cod,dat,val,situacio,datafi,EV.TBC,HBA1c.valor)
 
+# fer-ho!!
 
 ##############
 #[25.03.2021]#
@@ -328,7 +342,9 @@ dt_variables2<-dt_variables%>%mutate(idp=CIP)%>%select(-CIP)%>%left_join(dades,b
 dt_variables2<-dt_variables2%>%filter(!is.na(situacio))
 
 dt_variables2<-dt_variables2%>%mutate(TBC= ifelse(is.na(EV.TBC) , 0, 1))
+
 dt_variables2<-dt_variables2%>%mutate(situacio= ifelse(TBC==1 ,"TBC" , situacio))
+
 dt_variables2$datafi<-ifelse(!is.na(dt_variables2$EV.TBC),dt_variables2$EV.TBC,dt_variables2$datafi)
 dt_variables2$datafi<-as.Date(dt_variables2$datafi,origin = "1970-01-01")
 
@@ -351,11 +367,11 @@ dt_variables2$datafi<-as.character(dt_variables2$datafi)
 dt_variables2$DIA2<-substr(dt_variables2$datafi,9,10)
 dt_variables2$MES2<-substr(dt_variables2$datafi,6,7)
 dt_variables2$ANY2<-substr(dt_variables2$datafi,1,4)
-
 dt_variables2$datafi<-paste0(dt_variables2$ANY2,dt_variables2$MES2,dt_variables2$DIA2)
-
 dt_variables2$datafi<-as.numeric(dt_variables2$datafi)
-dt_variables2<-dt_variables2%>%select(idp,cod,dat,val,situacio,datafi,dtindex)
+
+
+dt_variables2<-dt_variables2%>%select(idp,cod,dat,val,situacio,datafi,dtindex,HBA1c.valor)
 dt_variables2<-dt_variables2%>%arrange(cod ,dat)
 
 # mirar la dataIndex??? Demà!!
@@ -363,6 +379,14 @@ dt_variables2<-dt_variables2%>%arrange(cod ,dat)
 ##################################################################
 #FALTA , preguntar Jordi R , pel DTINDEX, +Repàs de la sintaxis! #
 ##################################################################
+
+
+  #dt=dt_variables2   
+  #grup="HBA1c"
+  #dataini="dat"
+  #datasort="datafi"
+  #endpt="situacio"
+  #bd.dindex="dtindex"
 
 
 # aliquem la funcio
@@ -373,7 +397,11 @@ analitiques_temps<-Analitica_Temps(
   dataini="dat",
   datasort="datafi",
   endpt="situacio",
-  bd.dindex=dt_variables2$dtindex )
+  bd.dindex="dtindex" )
+
+
+
+
 
 
 
@@ -608,7 +636,7 @@ library(survival)
 
 ```
 
-## Tabla.6a Modelos de Cox dependientes del Tiempo (HBA1c) para la TBC,estratificado por sexo.[Hba1c>7.5+strata(Sexe)+Edat+cluster(idp]
+## Tabla.6a Modelos de Cox dependientes del Tiempo (HBA1c) para la TBC,estratificado por sexo.[Hba1c>7.5+strata(Sexe)+Edat+cluster(idp)]
 
 ```{r MODEL_COX1, include=T,eval = TRUE}
 
@@ -631,25 +659,28 @@ library(survival)
 
 
 #i)
-#fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+sexe+edat+cluster(idp),data=analitiques_temps)
-#summary(fit1)
-#cox.zph(fit1)
+fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+sexe+edat+cluster(idp),data=analitiques_temps)
+summary(fit1)
+cox.zph(fit1)
 #plot(cox.zph(fit1))
 
 fit1b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
 summary(fit1b)
 cox.zph(fit1b)
 
+
+
+
 ```
 
-## Tabla.6b Modelos de Cox dependientes del Tiempo (HBA1c) para la TBC,estratificado por sexo.[Hba1c>8+strata(Sexe)+Edat+cluster(idp]
+## Tabla.6b Modelos de Cox dependientes del Tiempo (HBA1c) para la TBC,estratificado por sexo.[Hba1c>8+strata(Sexe)+Edat+cluster(idp)]
 
 ```{r MODEL_COX2, include=T,eval = TRUE}
 
 #ii)
-#fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp),data=analitiques_temps)
-#summary(fit2)
-#cox.zph(fit2)
+fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp),data=analitiques_temps)
+summary(fit2)
+cox.zph(fit2)
 
 fit2b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
 summary(fit2b)
@@ -658,14 +689,14 @@ cox.zph(fit2b)
 
 ```
 
-## Tabla.6c Modelos de Cox dependientes del Tiempo (HBA1c) para la TBC,estratificado por sexo.[Hba1c>9+strata(Sexe)+Edat+cluster(idp]
+## Tabla.6c Modelos de Cox dependientes del Tiempo (HBA1c) para la TBC,estratificado por sexo.[Hba1c>9+strata(Sexe)+Edat+cluster(idp)]
 
 ```{r MODEL_COX3, include=T,eval = TRUE}
 
 #iii)
-#fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps)
-#summary(fit3)
-#cox.zph(fit3)
+fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps)
+summary(fit3)
+cox.zph(fit3)
 
 #iv)
 fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
@@ -675,6 +706,24 @@ cox.zph(fit4)
 
 plot(cox.zph(fit4))
 
+
+
+
+```
+## Tabla.6d Modelos de Cox dependientes del Tiempo (HBA1c) para la TBC,estratificado por sexo.[Hba1c>9+strata(edat)+strata(sexe)+cluster(idp)]
+
+```{r MODEL_COX4, include=T,eval = TRUE}
+
+
+
+
+#v)
+fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat_CAT+strata(sexe)+cluster(idp),data=analitiques_temps)
+summary(fit5)
+cox.zph(fit5)
+
+
+plot(cox.zph(fit5))
 
 ```
 
