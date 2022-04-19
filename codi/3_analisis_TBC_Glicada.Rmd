@@ -55,11 +55,16 @@ subtitle: "`r params$subtitul`"
 - 4.	Analizar el papel de la inmigración en la relación entre DM y TB.
 
 -----
+
+
   
+## Actualizaciones 
   
-  ## Actualizaciones 
+>14/04/2022
+
+Taules article
   
-  >04/03/2022
+>04/03/2022
   
 &check; Características basales de las variables de estudio entre diabéticos con y sin TB <br/>
   
@@ -156,8 +161,12 @@ library(dplyr)
 library(survminer)
 library(compareGroups)
 # CArrego funcions -------------------
+
 link_source<-paste0("https://github.com/jrealgatius/Stat_codis/blob/master/funcions_propies.R","?raw=T")
 devtools::source_url(link_source)
+# source("C:/Users/USER/Mi unidad/Stat_codis/funcions_propies.R")
+
+
 conductor_variables<-here::here("variables_tbc.xls")
 conductor_agencia<-here::here("conductor_agencia.xls")
 if (params$metode=="dinamica2") dir_output<-"dades/output_dinamic2"
@@ -173,7 +182,8 @@ source("funcions_TBC.R")
 load(here::here(dir_output,"output4.Rdata"))
 dt_ecap<-netejar.noms.variables(dt_ecap) %>% as_tibble()
 dades<-dt_ecap %>% netejar_espais()
-dt_variables<-readRDS(here::here("dades","dt_variables.rds"))
+
+# dt_variables<-readRDS(here::here("dades","dt_variables.rds"))
 ```
 
 
@@ -188,7 +198,6 @@ if (params$test==T) {
 
 
 
-
 ```{r formateig, message=FALSE, warning=FALSE, include=F, echo=FALSE,size="huge"}
 # Formateig ----------------
 # Calcul de variables noves edat etc..
@@ -197,9 +206,9 @@ dades<-dades %>% mutate_at(vars(starts_with("P_G_")), ~if_else(is.na(.),"No","Si
 dades<-dades %>% mutate_at(vars(starts_with("FP.")), ~if_else(is.na(.),"No","Si")) # Farmacs
 dades<-dades %>% mutate(PS=if_else(is.na(PS),0,1))
 dades<-dades %>% factoritzar.NO.SI("factoritzarSINO",taulavariables=conductor_variables)
+
+
 # Recode rangs de valors fora de l'interval a missings Reals (missings de valors reals)
-
-
 # apaño para Rai! #Canviat el 9.3.2021 
 ###############################################
 #recode_to_missings funcion   9.3.2021        #
@@ -304,11 +313,6 @@ dades<-dades %>%
   mutate(descNacionalitat.2=if_else(descNacionalitat.2=="No","1. Espanya",descNacionalitat.2))
 
 
-#####
-#
-#
-#
-#####
 
 ```
 
@@ -331,12 +335,8 @@ dades<-dades %>%
   mutate_at(vars(ends_with("_CATQ")), ~ifelse(!is.na(.),levels(.),"None") %>% as.factor())
 # Etiquetació de variables  -----------
 dades<-etiquetar(dades,taulavariables = conductor_variables,camp_descripcio = "Descripcio")
-# Comprovar events durant seguiment
-# dades %>% filter(!is.na(DET_TB) | !is.na(DET2_TB) | event_tbc==1) %>% select(DET_TB,DET2_TB,event_tbc,filtre_TBC)
-# dades %>% filter(event_tbc==1) %>% transmute(DET_TB,DET2_TB,event_tbc,filtre_TBC)
-# dades %>% filter(!is.na(DET2_TB)) %>% transmute(case.id,CIP,dtindex,DET_TB,lubridate::as_date(DET2_TB),event_tbc,filtre_TBC,grup)
-# 
-# dades %>% distinct(CIP)
+
+
 ```
 
 
@@ -358,7 +358,6 @@ dt_agencia<-dt_agencia %>% mutate_at(vars_factor,as.factor)
 # Etiquetar 
 dt_agencia<-etiquetar(d=dt_agencia,taulavariables=conductor_agencia)
 dt_agencia<-etiquetar_valors(dt=dt_agencia,variables_factors=conductor_agencia,fulla="etiquetes",camp_etiqueta="etiqueta2")
-
 
 
 
@@ -425,6 +424,8 @@ if (params$metode=="dinamica2" | params$metode=="dinamica") {
     mutate(PS=ifelse(exclusions_parells>0,0,PS)) %>% 
     ungroup()
 }  
+
+
 ```
 
 ## Flowchart
@@ -469,8 +470,8 @@ dades<-dades%>%mutate(HbA1c_9=ifelse(HBA1c.valor>=9,"Si","No"))
 #[07.03.2022]*
 #dades<-dades%>% left_join(kkk,by="CIP")
 #
-#
-#
+
+
 #
 dades<-dades %>% criteris_exclusio(conductor_variables,"exc")
 # s'ha de tornar a etiquetar després de criteris_exclusió
@@ -479,189 +480,19 @@ dades<-etiquetar(dades,taulavariables = conductor_variables,camp_descripcio = "D
 ```
 
 
+```{r selecciono_DM}
 
+dades<-dades %>% filter(grup=="Diabetis")
 
-
-
-
-
-```{r calcul_status, include=T,eval = T}
-# Estatus competiting risk
-# Calculo censura_final (event, final_seguiment,exitus, canvigrup)
-dades<-dades %>% mutate(
-  datafi=if_else(datafi>lubridate::ymd(20181231),lubridate::ymd(20181231),datafi),
-  censura_tipo=case_when(datafi==lubridate::ymd(20181231)~"End of follow-up",
-                         datafi<lubridate::ymd(20181231) & exitus==1~"Exitus",
-                         datafi<lubridate::ymd(20181231) & exitus==0 ~"Swich group"))
-# Calculo estatus
-dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
-```
-
-## Esquema de reclutamiento del estudio Diabeticos incidentes
-
-```{r esquema, include=T,eval = T,suppress=T}
-# dades %>% filter(CIP=="AAAO141052000") %>% select(dtindex)
-# dt_temp %>% filter(CIP=="AAAO141052000") 
-llavor<-224
-# Preparo dades per plot
-dt_temp<-dades %>% filter(dtindex>20070101) %>%
-  transmute(CIP,id=case.id,Grupo=grup,dtindex=lubridate::ymd(dtindex),datafi=datafi,situacio,
-            data0=lubridate::ymd(20070101),Sexo=sexe,dNaixement,
-            lab_SexEdat=stringr::str_c(Sexo,lubridate::year(dNaixement)-lubridate::year(dtindex)),
-            EV.TBC_cat,event_tbc,censura_tipo) 
-
-
-# Trio un parell per tipus de censura (Swich_group,Exitus,End of follow-up)
-dt_temp1 <- dt_temp %>% 
-  group_by(id) %>% filter(sum(censura_tipo=="End of follow-up")>0) %>% ungroup(id) %>% 
-  mostreig_ids("id",2,llavor)
-dt_temp2 <- dt_temp %>% 
-  group_by(id) %>% filter(sum(censura_tipo=="Swich group")>0) %>% ungroup(id) %>% 
-  mostreig_ids("id",2,llavor)
-dt_temp3 <- dt_temp %>% group_by(id) %>% filter(sum(censura_tipo=="Exitus")>0) %>% ungroup(id) %>% 
-  mostreig_ids("id",1,llavor)
-dt_temp<-dt_temp1 %>% bind_rows(dt_temp2) %>% bind_rows(dt_temp3) %>% arrange(desc(dtindex)) %>% 
-  mutate(num=1:n(),id=as.factor(id))  # Generar id factor correlatiu
-
-
-# Mostrejo
-# llavor<-201
-# dt_temp <- dt_temp %>% mostreig_ids(id="id",n_mostra = 5,set_seed = llavor) %>% 
-#   mutate(num=1:n(),id=as.factor(id))  # Generar id factor correlatiu
-pp<-dt_temp %>% 
-  Esquema_ggplot(datainicial= "data0",  datafinal="dtindex",  id="num",  grup_shape=NA,  grup_color = "Grupo",  lim_inf=-Inf,  lim_sup="20181231",lab_y="lab_SexEdat") +
-  labs(title="Figura 1. Sampling and follow-up scheme",
-       subtitle = "5 pairs of individuals by age and sex",
-       color="Group:",
-       shape="") +
-  ylab("Subjects") +
-  xlab("Time")
-pp
-
-library(grDevices) 
-
-
-grDevices::png(here::here(dir_figures,"Figure1_esquema.png"))
-pp
-dev.off()
-
-```
-
-
-```{r esquema2, include=T,eval = T,suppress=T}
-# Truncamiento 
-# Evento TBC, Exitus, fin de seguimiento (), o canvio de grupo (Control). Controles sin reemplazamiento. 
-pp<- pp + 
-  geom_segment(aes(x =dtindex, xend=datafi, y =num, yend = num ),size=1) +
-  geom_point(aes(datafi, num, shape=censura_tipo),size=2.5,solid=FALSE)+
-  scale_shape(solid=FALSE) +
-  annotate("text", x = lubridate::ymd("20171201"), y = 0.5, label = "End of follow-up",size=3,fontface="bold") +
-  labs(title="Figura 1. Sampling and follow-up scheme",
-       subtitle = "5 pairs of individuals by age and sex",
-       color="Group:",
-       shape="")
-pp
-grDevices::png(here::here(dir_figures,"Figure2_esquema.png"))
-pp
-dev.off()
-
-
-```
-
-```{r, include=T,eval = T,suppress=T}
-## Preparo dades
-dt_temp<-dades %>% 
-  group_by(CIP) %>% mutate(repe=n()) %>% ungroup() %>% 
-  group_by(case.id) %>% filter(sum(repe>1)>0) %>% ungroup()
-dt_temp<-dt_temp %>% 
-  transmute(CIP,id=case.id,Grupo=grup,dtindex=lubridate::ymd(dtindex),datafi=datafi,situacio,
-            data0=lubridate::ymd(20070101),Sexo=sexe,dNaixement,
-            lab_SexEdat=stringr::str_c(Sexo,lubridate::year(dNaixement)-lubridate::year(dtindex)),
-            EV.TBC_cat,event_tbc,censura_tipo) 
-set.seed(123)
-# Selecciono casos
-if (params$test) ids<-dt_temp %>% pull(id) %>% unique () %>% head(2) else ids<-c("155","5698")
-dt_temp<-dt_temp %>% arrange(desc(dtindex)) %>% 
-  filter(id %in% ids) %>% 
-  mutate(num=1:n(),id=as.factor(id)) %>% 
-  mutate(lab_SexEdat=paste0(stringr::str_sub(CIP,1,4),"; ",lab_SexEdat))
-
-pp<-dt_temp %>% 
-  Esquema_ggplot(datainicial= "data0",  datafinal="dtindex",  id="num",  grup_shape=NA,  grup_color = "Grupo",  lim_inf=-Inf,  lim_sup="20181231",lab_y="lab_SexEdat") +
-  labs(title="Figura 3. Sampling and follow-up scheme",
-       subtitle = "2 pairs of individuals by age and sex",
-       color="Group:",
-       shape="") +
-  ylab("Subjects") +
-  xlab("Time") 
-pp
-grDevices::png(here::here(dir_figures,"Figure1.2_esquema.png"))
-pp
-dev.off()  
-pp<-pp + 
-  geom_segment(aes(x =dtindex, xend=datafi, y =num, yend = num ),size=1) +
-  geom_point(aes(datafi, num, shape=censura_tipo),size=2.5,solid=FALSE)+
-  scale_shape(solid=FALSE) +
-  annotate("text", x = lubridate::ymd("20171201"), y = 0.5, label = "End of follow-up",size=3,fontface="bold") +
-  labs(title="Figura 4. Sampling and follow-up scheme",
-       subtitle = "2 pairs of individuals by age and sex",
-       color="Group:",
-       shape="")
-pp
-grDevices::png(here::here(dir_figures,"Figure2.2_esquema.png"))
-pp
-dev.off()  
-```
-
-
-# Resultados
-
-## Exploratorio de validación 
-
-```{r exploratori, message=FALSE, warning=FALSE, include=F, echo=FALSE,size="huge",eval = T}
-# T BASAL -------------
-formu<-formula_compare(x="basales",y="grup",taulavariables = conductor_variables)
-
-descrTable(formu,data=dades,show.p.overall = F,show.n = T,method = 2,Q1=0,Q3=1) %>%
-  export2md(caption = "Mediana [Min; Max] Descriptiva de validació per grups")
 
 
 ```
 
 
-## TABLA 0. Características basales por grupos
-
-- Descriptivo de características basales entre grupos
-
-- Tabla 1. Características basales de las variables de estudio entre diabéticos y no diabéticos en ambas cohortes
-
-```{r resultats1, include=F, warning=FALSE,echo=FALSE, message=F,eval = T}
-formu<-formula_compare(x="basales",y="grup",taulavariables = conductor_variables)
-T1_BASAL<-descrTable(formu,data=dades,show.p.overall = T,show.n = T, hide.no = T,hide = "No")
 
 
-export2md(T1_BASAL,caption = "Descriptiva de caracterítiques basals entre grups (Frequencia, Mitjana (SD))")
 
-# # Validació missing age 
-# dades %>% filter(is.na(age)) %>% select(age,dNaixement,dtindex)
-# dt_ecap %>% select(age,dNaixement,dtindex)
-# Seleccionar CIPs unics  per descriptiva
-set.seed(1)
-dades_CIP<-dades %>% group_by(CIP) %>% sample_n(1) %>% ungroup()
-# descrTable(grup~DG.TBC_cat,data=dades_CIP,show.p.overall = T,show.n = T, hide.no = T)
-# descrTable(formu,data=dades_CIP,show.p.overall = T,show.n = T, hide.no = T,hide = "No")
-
-
-```
-
-
-- Descriptiu de característiques basals entre grups (DM1, DM2 vs controls)
-
-Nota 1: hi ha pacients classificats en DM1 i DM2. De moment es prioritza DM2
-Nota 2: Laparellament NO es manté en la comparativa de DM1 versus DM2
-
-
-```{r, include=F,eval = T}
+```{r, eval=TRUE}
 # Mana DMT2
 dades<-dades %>% mutate(grup2=case_when(grup=="Control"~"Control",
                                         DG.DM1_cat=="Yes"~"DM1",
@@ -674,14 +505,8 @@ dades<-dades %>%
                          grup=="Diabetis" & any2007=="No"~ "DM Incident", 
                          grup=="Control"~"Control")) 
 #
-formu<-formula_compare(x="basales",y="grup2",taulavariables = conductor_variables)
-descrTable(formu,data=dades,show.p.overall = T,show.n = T, hide.no = T,hide = "No", show.p.mul = T,p.corrected = TRUE) %>% 
-  export2md(caption = "Descriptiva de caracterítiques basals entre grups (Frequencia, Mitjana (SD))")
 
 ```
-
-
-# TABLA 1 :  Características basales de las variables de estudio entre diabetes con y sin TB
 
 ```{r afegir_dades_agencia, eval=TRUE}
 
@@ -709,9 +534,7 @@ dades<-etiquetar_valors(dades,variables_factors = dt_conductor_etiquetes)
 ```
 
 
-
-```{r, include=T,eval = T}
-
+```{r mesrecodes, eval=TRUE}
 
 # recodificacio:: MACRO: [AVC+CI+ARTER]    MICRO: [RETINO+NEFRO]
 
@@ -724,14 +547,13 @@ dades<-
 dades<-
   dades %>% mutate(IMC.valor.cat2=ifelse(IMC.valor.cat=="None"  ,NA,IMC.valor.cat))
 
-#dades<-mutate_at(dades, vars( starts_with("HbA1c_7") ), funs( if_else(.=="No"  | is.na(.)  ,"No","Si")))
-
-
 
 ########[29.03.2022]
-
-dades<-
-  dades %>% mutate(PPD=ifelse(PPD==0 | PPD==9,NA,PPD))
+# 
+# dades %>%  filter(event_tbc==1 & HBA1c.valor>0) %>% group_by(PPD) %>% count()
+# 
+# dades<-
+#   dades %>% mutate(PPD=ifelse(PPD==0 | PPD==9,NA,PPD))
 
 
 ########[01.04.2022]
@@ -741,87 +563,119 @@ dades<-dades %>%
                           (TB_LIMFATICA=="Si" |TB_OSTEOART=="Si" | TB_GENITOURIN=="Si"| TB_MENINGEA=="Si"| TB_LARINGEA=="Si" | TB_ALTRESLOC=="Si") ~ "TBC Extra.Pulmonar"))
 
 
-dadesDM<-dades%>% filter(grup=="Diabetis")
-
-
-formu<-formula_compare(x="basalesJosep",y="EV.TBC_cat",taulavariables = conductor_variables)
+```
 
 
 
-descrTable(formu,data=dadesDM,show.p.overall = T,show.n = T,method = 1,Q1=0,Q3=1,show.all = TRUE) %>%
-  export2md(caption = "Tabla  1a. Características basales de las variables de estudio entre diabéticos con y sin TBC [Medias,Sd]")
+```{r calcul_status, include=T,eval = T}
+# Estatus competiting risk
+# Calculo censura_final (event, final_seguiment,exitus, canvigrup)
+dades<-dades %>% mutate(
+  datafi=if_else(datafi>lubridate::ymd(20181231),lubridate::ymd(20181231),datafi),
+  censura_tipo=case_when(datafi==lubridate::ymd(20181231)~"End of follow-up",
+                         datafi<lubridate::ymd(20181231) & exitus==1~"Exitus",
+                         datafi<lubridate::ymd(20181231) & exitus==0 ~"Swich group"))
+# Calculo estatus
+dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
+```
 
-descrTable(formu,data=dadesDM,show.p.overall = T,show.n = T,method = 2,Q1=0,Q3=1,show.all = TRUE) %>%
-  export2md(caption = "Tabla  1b. Características basales de las variables de estudio entre diabéticos con y sin TBC [Medianas,Min,Max]")
+
+```{r}
+
 
 ```
 
 
-# Figura 1. Distribución % dels valores HBA1c en Poblacion Diabetica con y sin TBC 
 
-```{r, include=T,eval = T}
+# Resultados
 
+## Descriptiu 
 
+DM amb TB (Tots)
+DM HbA1c<7.5
+DM HbA1c>=7.5
 
-genera_figures_HTG<-function(dt=dades,subtitul="",lim1=0,lim2=20,bins=150) {
-  
+Variables a comparar: 
 
-
-      ggplot(data = dt, aes(HBA1c.valor))+
-       geom_histogram(bins = bins,aes(y =1*( ..count../sum(..count..)))) +
-        scale_y_continuous(name = "%", labels=scales::percent) +
-          labs(title=paste0("Distribución HBA1c "),
-               subtitle = subtitul, x ="HBA1c ")+
-            scale_color_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
-             scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
-               theme_classic() +
-                xlim(lim1,lim2) 
-   
-
-}
+(tots els DM amb TB tinguin o no HbA1c, HbA1c<7,5 i HbA1c>= 7,5%) miressis la correlació amb les seguents variables (i la p entre HbA1c<7,5 i >=7,5)
+    a) mort
+    b) localització de la TB. Hi ha una variable que es diu PULM que té com a categories: TBC pulm, TBC extrapulm i TBC pulm i extrapulm. Aquestes son les categories que vull
+   c) no he trobat dades del tractament de la TB ni de les resistencies al tractament
+   d) ens olvidem de separar DM1 de DM2. Nomes hi ha 2 casos de DM1
+   e) no se si rebuscant a la BD de la agencia pots trobar més dades de interes ... per exemple el diagnostic he posat una variable sobre la bacteriologia ... que no acabo de veure clara. 
 
 
-dadesDM2<-dades %>% filter(grup=="Diabetis" & EV.TBC_cat=="Si")
-dadesDM3<-dades %>% filter(grup=="Diabetis" & EV.TBC_cat=="No")
+```{r}
 
 
-dades %>% filter(grup=="Diabetis" & EV.TBC_cat=="Si") %>% genera_figures_HTG("Distribución % dels valores HBA1c en TBC",lim2=20,bins=18)
-dades %>% filter(grup=="Diabetis" & EV.TBC_cat=="No") %>% genera_figures_HTG("Distribución % dels valores HBA1c en No TBC",lim2=20)
+dt_temp<-
+  dades %>% filter(event_tbc==1) %>% 
+  mutate(HbA1c_7.5_mis=ifelse(is.na(HbA1c_7.5), "Unknown", HbA1c_7.5))
+
+
+descrTable(HbA1c_7.5~ exitus + TIP_TBC + PPD+ BACTERIOL + RADIOLOGIA,
+           data = dt_temp, method = 3, show.all =  F) %>% 
+  export2md()
+
+descrTable(HbA1c_7.5_mis~ exitus + TIP_TBC + PPD + BACTERIOL + RADIOLOGIA,
+           data = dt_temp, method = 3, show.all =  T) %>% 
+  export2md()
+
+
+
+
+```
+
+
+Desde un punt de vista clínic m'agradaria fer 2 models multivariants
+
+a) Ajustant només per edat i sexe
+
+b) ajustant per variables que clínicament poden ser rellevants per tenir una TB: edat, sexe, nacionalitat (hi ha una variable de la agencia que separa autoctons de immigrants), Medea, presencia de complicacions macrovasculars, presencia de complicacions microvasculars, anys d'evolució de la DM, tabac, alcohol, antecedents de TB previa i valor de la HbA1c (tallant a HbA1c>=7,5% i >=9%) . Potser creus que alguna d'aquestes variables no es adequada o pot produir errors o ....
+Amb aquestes variables em poses els HR, IC i p, per poder fer el forest plot de desnvolupar una TB en els pacients amb DM
+
+
+## TABLE 4 Hazard ratios ajustados según modelo completo
+
+- HR ajustat segons model de riscos competitius Fine & Grey
+- Grup DM versus control, 
+- DM1 DM2, incident and prevalent versus Control
+
+```{r genero_HR, echo=FALSE, message=FALSE, warning=FALSE, include=T, size="huge",eval=F}
+
+# Estimació de HR complets de riscos competitius
+if (params$metode=="dinamica2") cluster="case.id" else cluster=""
+# Ajustos
+vector_ajustos<-c("","DM_ajust","DM_ajust2","DM_ajust3","DM_ajust4") %>% 
+  stats::setNames(c("Unadjust","Model 1","Model 2","Model 3","Model 4"))  
+# Models de COX 
+taula_models_COX<-vector_ajustos %>% purrr::map_df(~
+                                                     extreure_HR(a="grup",x=.x,event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster),.id="Model")
+# Models de Riscos Comepetitius FG
+# llista de models
+taula_models_FG<-vector_ajustos %>% purrr::map_df(~ Estima_HR_RCrisk_clusters(dades,.x,a="grup",failcode = "Event",cencode = "End of follow-up"),.id="Model")
+# dades %>% select(grup,grup2)
+# printar models
+taula_models<-taula_models_FG %>% bind_rows(taula_models_COX)
+
+
+extreure_HR(a="grup",x="",event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster) %>% mutate(adjust="Unadjusted")
+
+Estima_HR_RCrisk_clusters(dades,"DM_ajust",a="grup",failcode = "Event",cencode = "End of follow-up")
+
 
 
 
 
 ```
 
-# TABLA 2:  Características eventos TBC segun grado de control[HbA1c<7.5%,HbA1c>=7.5%] de la DM 
-
-```{r, include=T,eval = T}
-
-
-
-formu<-formula_compare(x="basalesJosep2",y=" ",taulavariables = conductor_variables)
-formu2<-formula_compare(x="basalesJosep2",y="HbA1c_7.5",taulavariables = conductor_variables)
-
-formu3<-formula_compare(x="basalesJosep2",y="HbA1c_9",taulavariables = conductor_variables)
-
-descrTable(formu,data=dadesDM%>%filter(EV.TBC_cat=="Si"),show.p.overall = T,show.n = T,method = 1,Q1=0,Q3=1,show.all = TRUE) %>%
-  export2md(caption = "Tabla  2a. Características TBC en Poblacion Diabetica [Medias,Sd]")
-
-
-
-descrTable(formu2,data=dadesDM%>%filter(EV.TBC_cat=="Si"),show.p.overall = T,show.n = T,method = 1,Q1=0,Q3=1,show.all = TRUE) %>%
-  export2md(caption = "Tabla  2a. Características TBC en Poblacion Diabetica según grado de control de la DM <7.5% us >=7.5% [Medias,Sd]")
-
-
-
-```
 
 
 # TABLA 3. Incidencia de TBC en pacientes DM y no DM
 
 - Incidencia global de TBC (TBC sólo confirmados según datos ASPB)
 
-```{r resultats5, message=FALSE, warning=FALSE, include=T, echo=FALSE,size="huge",eval = T}
+```{r resultats5, message=FALSE, warning=FALSE, include=T, echo=FALSE,size="huge",eval = F}
 # T BASAL -------------
 
 res1<-dades %>% Resum_taxa_incidencia(evento="event_tbc",temps="anys_lliure_tbc",valorevent="1") 
@@ -869,50 +723,9 @@ res1b %>% bind_rows(res6)  %>%
 
 ```
 
-# TABLA 3b. Hazard Ratio de Tuberculosis con pacientes de DM
-
-
-```{r resultats6, message=FALSE, warning=FALSE, include=T, echo=FALSE,size="huge",eval=T}
-
-#10.3.2022:
-descrTable(surv_tbc~HbA1c_7.5,data=dadesDM,show.ratio = T, byrow = T ,surv = T) %>% export2md(caption = "Hazard Ratio de Tuberculosis pacientes de DM")
-
-#plot(surv_tbc~HbA1c_7,data=dades,show.ratio = T, byrow = T ,surv = T)
-
-
-#31.3.2022:
-descrTable(surv_tbc~HbA1c_9,data=dadesDM,show.ratio = T, byrow = T ,surv = T) %>% export2md(caption = "Hazard Ratio de Tuberculosis pacientes de DM")
-
-#plot(surv_tbc~HbA1c_7,data=dades,show.ratio = T, byrow = T ,surv = T)
 
 
 
-```
-
-## TABLE 4 Hazard ratios ajustados según modelo completo
-
-- HR ajustat segons model de riscos competitius Fine & Grey
-- Grup DM versus control, 
-- DM1 DM2, incident and prevalent versus Control
-
-```{r genero_HR, echo=FALSE, message=FALSE, warning=FALSE, include=T, size="huge",eval=F}
-# Estimació de HR complets de riscos competitius
-if (params$metode=="dinamica2") cluster="case.id" else cluster=""
-# Ajustos
-vector_ajustos<-c("","DM_ajust","DM_ajust2","DM_ajust3","DM_ajust4") %>% 
-  stats::setNames(c("Unadjust","Model 1","Model 2","Model 3","Model 4"))  
-# Models de COX 
-taula_models_COX<-vector_ajustos %>% purrr::map_df(~
-                                                     extreure_HR(a="grup",x=.x,event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster),.id="Model")
-# Models de Riscos Comepetitius FG
-# llista de models
-taula_models_FG<-vector_ajustos %>% purrr::map_df(~ Estima_HR_RCrisk_clusters(dades,.x,a="grup",failcode = "Event",cencode = "End of follow-up"),.id="Model")
-# dades %>% select(grup,grup2)
-# printar models
-taula_models<-taula_models_FG %>% bind_rows(taula_models_COX)
-# extreure_HR(a="grup",x="",event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster) %>% mutate(adjust="Unadjusted")
-# Estima_HR_RCrisk_clusters(dades,"DM_ajust6",a="grup",failcode = "Event",cencode = "End of follow-up") 
-```
 
 
 ```{r,include=T,eval = F}

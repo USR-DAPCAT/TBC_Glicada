@@ -42,10 +42,11 @@ source(here::here("codi","global_TBC.R"))
 ###############################################
 
 # Version="2018.08.09"
-# githubinstall::githubinstall("heaven",ref = "964bbbd",force = T)
 
 library("heaven")
-library("heaven",lib.loc="C:/Users/38122893W/Desktop/llibreria_R/heaven_2018")
+# library("heaven",lib.loc="C:/Users/38122893W/Desktop/llibreria_R/heaven_2018")
+# Version="2018.08.09"
+# githubinstall::githubinstall("heaven",ref = "964bbbd",force = T)
 
 
 
@@ -77,14 +78,27 @@ fitxer_conductor_general<-here::here("variables_general.xls")
 
 
 ```{r lectura, warning=F, cache=TRUE}
+
 CATALEG<-readxl::read_excel(fitxer_conductor_cataleg,col_types = "text")
 #     Problemes de salut ----------
-dt_psalut3<-read.csv2(here::here("dades","PSalut3.csv"), header=T, sep=";",fileEncoding="utf-16") %>% as_tibble()
-dt_psalut<-read.csv(here::here("dades","extracció tbc dm metode antic-1.csv"), header=T, sep=";",fileEncoding="utf-16") %>% as_tibble()
+dt_psalut3<-
+  read.csv2(here::here("dades","PSalut3.csv"), header=T, sep=";",fileEncoding="utf-16") %>% as_tibble()
+
+dt_psalut<-
+  read.csv(here::here("dades","extracció tbc dm metode antic-1.csv"), header=T,
+           sep=";",fileEncoding="utf-16") %>% as_tibble()
+
+
 # Fusió problemes
-dt_psalut<-dt_psalut %>% bind_rows(dt_psalut3) %>% select(cipACT,codiPSalut,ddeteccio)
+dt_psalut<-dt_psalut %>% 
+  bind_rows(dt_psalut3) %>% select(cipACT,codiPSalut,ddeteccio)
 rm(dt_psalut3)
 
+
+```
+
+
+```{r lectura2, warning=F, cache=TRUE}
 #     Laboratori/Variables -------------
 # dt_laboratori_antic<-read.csv(here::here("dades","Laboratori.csv"), header=T, sep=";",fileEncoding="utf-16") %>% as_tibble()
 dt_laboratori<-read.csv(here::here("dades","Laboratori3.csv"), header=T, sep=";",fileEncoding="utf-16") %>% as_tibble()
@@ -161,9 +175,8 @@ dt_cips_antic %>% anti_join(dt_cips, by="CIP")
 ```{r Formatar1, cache=TRUE}
 # Formatar dates
 
-#TB _PULMONAR"    "TB_PLEURAL"      "TB_PLEUROPULM"   "TB_LIMFATICA"    "TB_OSTEOART"     "TB_MILIAR"       "TB_GENITOURIN"  
+#TB _PULMONAR"    "TB_PLEURAL"      "TB_PLEUROPULM"   "TB_LIMFATICA"    "TB_OSTEOART"     "TB_MILIAR"     "TB_GENITOURIN" 
 # "TB_MENINGEA"     "TB_LARINGEA"     "TB_ALTRESLOC" 
-
 
 dt_dades<-dt_dades %>% mutate(DATA_NAIX=as.Date(DATA_NAIX, origin = "1899-12-30"),
                     DAT_INCL=as.Date(DAT_INCL, origin = "1899-12-30"),
@@ -183,11 +196,6 @@ dt_dades<- dt_dades %>%
 dt_dades<-dt_dades %>% mutate(DET_TB_ECAP=DET_TB,
                               DET_TB=pmin(INICITRACT,DAT_NOTIF,na.rm = T))
 
-
-
-
-
-
 # Actualitzar dt_demografiques  amb dades generals de l'agencia (sobretot els 1643 que no teniem en E-cap)
 # Formatejo dades de dt_dades
 dades_temp<- dt_dades %>% transmute(CIP,
@@ -199,12 +207,6 @@ dades_temp<- dt_dades %>% transmute(CIP,
                        ABS,
                        descUP=BARRI,
                        INCL_CVELLA)
-
-
-
-
-
-
 
 # selecciono només aquells CIPS que no estan a dades demografiques (n=1643)
 dades_temp<-dades_temp %>% anti_join(dt_demografiques,by="CIP") 
@@ -220,9 +222,12 @@ dt_demografiques<-dt_demografiques %>% group_by(CIP) %>% slice(1) %>% ungroup()
 #temp<-dt_agencia %>%
 #  select(CIP,MEDEA,INDIGENT,GRUP_OCUP,MORT2,PPD,RADIOLOGIA,PPD,BACTERIOL)%>% 
 #     unique()
+```
 
 
+```{r Formatar1.2, cache=TRUE}
 #     Capturo primera data_TBC de dades_dt (Agencia) en dt_demografiques  ---------------
+
 temp<-dt_dades %>% select(CIP,DET_TB,
                           "TB _PULMONAR",
                           TB_PLEURAL,
@@ -673,11 +678,9 @@ dt_temp4<-
 temp<-temp %>% 
   bind_rows(dt_temp4) %>% group_by(idp) %>% arrange(EV.DM) %>% slice(1) %>% ungroup()
 
-
 # Events 3 nivell 
 temp2<-agregar_problemes(dt_psalut,bd.dindex =data_index_agregacio,dt.agregadors=CATALEG,
                          finestra.dies = c(+1,+Inf),prefix="EV.",camp_agregador="subgrup") 
-
 
 dt_events.agregada<-dt_events.agregada %>% full_join(temp) %>% full_join(temp2)
 rm(temp,temp2)

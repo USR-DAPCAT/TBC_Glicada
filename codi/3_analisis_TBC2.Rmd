@@ -406,6 +406,8 @@ if (params$metode=="dinamica2" | params$metode=="dinamica") {
     mutate(PS=ifelse(exclusions_parells>0,0,PS)) %>% 
     ungroup()
 }  
+
+
 ```
 
 
@@ -462,6 +464,9 @@ dades<-dades %>% mutate(
                          datafi<lubridate::ymd(20181231) & exitus==0 ~"Swich group"))
 # Calculo estatus
 dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
+
+
+
 ```
 
 ## Esquema de reclutamiento del estudio Diabeticos incidentes
