@@ -43,7 +43,7 @@ source(here::here("codi","global_TBC.R"))
 
 # Version="2018.08.09"
 
-library("heaven")
+# library("heaven")
 # library("heaven",lib.loc="C:/Users/38122893W/Desktop/llibreria_R/heaven_2018")
 # Version="2018.08.09"
 # githubinstall::githubinstall("heaven",ref = "964bbbd",force = T)

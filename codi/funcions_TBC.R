@@ -63,6 +63,14 @@ Esquema_ggplot<-function(dt=dt_temp,datainicial="data",datafinal="datafi",id="id
 
 extreure_HR<-function(a="grup2",x="DM_ajust",c=c,...) { 
   
+  a="HbA1c_7"
+  x=""
+  event = "event_tbc"
+  t="temps_tbc"
+  d=dades
+  taulavariables = conductor_variables
+  c=cluster
+  
   if (x!="") covariables<-c(a,extreure.variables(x,conductor_variables)) %>% unique() %>% paste0(collapse = ", ")
   if (x=="") covariables<-c(a) 
   
@@ -74,6 +82,11 @@ extreure_HR<-function(a="grup2",x="DM_ajust",c=c,...) {
     transmute(var=id,HR=HRadjusted,`Li95%CI`=IC951,`Ls95%CI`=IC952,`p-value`=p,method=method,adjustedby=covariables) %>% 
     filter(row_number() %in% c(1,num_nivells-1))
   
+  # HR.COX(a=a,x=x, event = "event_tbc",t="temps_tbc",d=dades, taulavariables = conductor_variables,c=cluster) %>% as_tibble(rownames="id") %>% 
+  #   transmute(var=id,HR=HRadjusted,`Li95%CI`=IC951,`Ls95%CI`=IC952,`p-value`=p,method=method,adjustedby=covariables) %>% 
+  #   filter(row_number() %in% c(1,num_nivells-1))
+  
+  
 }
 
 Estima_HR_RCrisk_clusters<-function(dt=dades,cov1="DM_ajust",a="grup2",failcode = "Event",cencode = "End of follow-up") {
@@ -82,15 +95,19 @@ Estima_HR_RCrisk_clusters<-function(dt=dades,cov1="DM_ajust",a="grup2",failcode 
   # cencode = "End of follow-up"
   # dt=dades
   # cov1="DM_ajust3"
-  # a="grup"
-  
-  gc()
-  
+  # cov1=""
+  # a="HBA1c.valor"
+
+  # Covariables
   if (cov1!="") covariables<-c(a,extreure.variables(cov1,conductor_variables,variable_camp = "camp")) %>% unique() else covariables<-c(a)
-  
+
   nomscovariables<-colnames(stats::model.matrix(formula_vector(covariables,""),data = dt))[-1]
   cov1 <- stats::model.matrix(formula_vector(covariables,""),data = dt)[, -1]
+
+  # Filtro per missings per case.id
+  dt<-dt %>% semi_join(dt %>% select(case.id,covariables)  %>% na.omit(),by="case.id")
   
+  # Model i extrect variables
   model<-crrSC::crrc(ftime=dt$temps_tbc,
                      fstatus=dt$status,
                      cov1=cov1,
@@ -101,7 +118,8 @@ Estima_HR_RCrisk_clusters<-function(dt=dades,cov1="DM_ajust",a="grup2",failcode 
   tab<-cmprsk::summary.crr(model) 
   tab<- tibble(var=nomscovariables) %>% bind_cols(tab$coef %>% as_tibble())
   
-  num_nivells<-levels(as.factor(dt[[a]])) %>% length()
+  if (is.character(dt[[a]]) | is.factor(is.character(dt[[a]]))) num_nivells<-levels(as.factor(dt[[a]])) %>% length()
+  if (!(is.character(dt[[a]]) | is.factor(is.character(dt[[a]])))) num_nivells<-1
   
   x<-tab %>% 
     transmute(var,
@@ -306,6 +324,101 @@ forest.plot.modelcomplet<-function(dadesmodel=dadesmodel,label="Categoria",mean=
   fp
   
 }
+
+
+
+Analitica_Temps<-function(
+  dt=dt_variables2 ,  
+  grup="HBA1c",
+  dataini="dat",
+  datasort="datafi",
+  endpt="situacio",
+  bd.dindex="dtindex") {
+  
+  
+  # dt=dt_variables  
+  # grup="HBA1c"
+  # dataini="dat"
+  # datasort="datafi"
+  # endpt="situacio"
+  # bd.dindex="dtindex"
+  
+
+  dt<-dt %>%
+    select(idp=CIP,cod=cod,val=val,dat=sym(!!dataini),datafi=sym(!!datasort),situacio=sym(!!endpt),dtindex=sym(!!bd.dindex)) %>% 
+    filter(cod==!!grup) %>% 
+    mutate(dtindex=lubridate::ymd(dtindex)) %>% 
+    arrange(idp,dat) %>% 
+    filter(dat>=dtindex) %>% 
+    filter(datafi>=0)
+  
+  # #
+  # dataini<-rlang::sym(dataini)
+  # datasort<-rlang::sym(datasort)
+  #
+  #################################################################
+
+  
+  # print("Posem un NA, aquelles Dates inferiors , al dia Index")
+  # dt<-dt %>% mutate(dat = ifelse(dat < dtindex , NA, dat ))
+  # #
+  # print("Convertim les dates numeriques , amb dates!  ")
+  # 
+  # dt<-dt%>%mutate(dat2=as.character(!!dataini))
+  # dt<-dt%>%mutate(dat2=as.Date(dat2,"%Y%m%d"))
+  # 
+  # dt<-dt%>%mutate(dat_sort=as.character(!!datasort))
+  # dt<-dt%>%mutate(dat_sort=as.Date(dat_sort,"%Y%m%d"))
+  # 
+  #
+  #
+  # fins aqui BE!!!
+  print("Calculem el temps!!!")
+  dt<-dt %>% 
+    dplyr::group_by(idp) %>% mutate(T1=dat-lag(dat)) %>% ungroup() %>% 
+    mutate(T1 = ifelse(T1==0 | is.na(T1) , 0, T1))
+  
+  #
+  print("tstart=temps inicial acumulatiu!")
+  dt<-dt %>% group_by(idp) %>% mutate(tstart = cumsum(T1)) %>% ungroup() 
+  #
+  print("tstop=temps final acumulatiu!, comptant la data final!")
+  dt<- dt %>% group_by(idp)%>%mutate(tstop=lead(tstart))%>%ungroup() 
+  
+  #
+  dt<- dt %>% mutate_at(vars( starts_with("tstop") ), funs( if_else(is.na(.) ,(datafi - dat) + tstart,tstop)))
+  #
+  print("Base de Dades, preparada, per fer un models amb variables dependents del temps")
+  dt<-dt %>% filter(tstop>0) %>% select(-T1,-dat,-datafi)
+  
+  #################################################################
+  #24.3.2021
+  
+  dt$tstop<-as.numeric(dt$tstop)
+  
+  #################################################################
+  #25.3.2021
+  
+  dt<-dt %>% 
+    mutate (kk=ifelse(idp==lead(idp),0,1)) %>% 
+    mutate(situacio=ifelse(kk==1,situacio,"A")) %>% 
+    select(-kk)
+  
+  #
+  ##################################################################
+
+  #
+  dt
+}
+
+
+
+
+
+
+
+
+
 
 
 

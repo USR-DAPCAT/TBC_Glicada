@@ -16,7 +16,7 @@ output:
 params:
   metode: "dinamica2"  # "dinamica" / "dinamica2" / "estatica" / "PS" 
   subtitul: ""
-  test: FALSE
+  test: FALSE # T
 
 title: "Diabetes y Tuberculosis en Ciutat Vella (Barcelona). Estudio longitudinal de la asociación de las dos enfermedades en un distrito con alta prevalencia de tuberculosis"
 subtitle: "`r params$subtitul`"
@@ -208,13 +208,18 @@ dades<-dades %>% mutate(PS=if_else(is.na(PS),0,1))
 dades<-dades %>% factoritzar.NO.SI("factoritzarSINO",taulavariables=conductor_variables)
 
 
+
+```
+
+
+```{r funcio_formateig, message=FALSE, warning=FALSE, include=F, echo=FALSE,size="huge"}
+
+
 # Recode rangs de valors fora de l'interval a missings Reals (missings de valors reals)
 # apaño para Rai! #Canviat el 9.3.2021 
 ###############################################
 #recode_to_missings funcion   9.3.2021        #
 ###############################################
-
-
 
 recode_to_missings<-function(dt=dades,taulavariables=conductor_variables,rang="rang_valid", data_long=F,...) {
   
@@ -276,7 +281,10 @@ recode_to_missings<-function(dt=dades,taulavariables=conductor_variables,rang="r
   dt
   
 }
+```
 
+
+```{r formateig2, message=FALSE, warning=FALSE, include=F, echo=FALSE,size="huge"}
 
 dades<-recode_to_missings(dades,taulavariables = conductor_variables,rang="rang_valid")
 # Calcul de dies i anys lliure de TBC 
@@ -299,7 +307,7 @@ dades<-dades %>% mutate(VACUNA= if_else(P_G_60.valor == "Si" |
 
 ```
 
-```{r formateig2}
+```{r formateig3}
 # Etiquetes de valors
 dades<-etiquetar_valors(dades, variables_factors= conductor_variables,fulla="etiquetes")
 # Recode paisos dos agrupacions
@@ -317,7 +325,7 @@ dades<-dades %>%
 ```
 
 
-```{r formateig3, message=FALSE, warning=FALSE, include=F, echo=FALSE,size="huge"}
+```{r formateig4, message=FALSE, warning=FALSE, include=F, echo=FALSE,size="huge"}
 #ifelse
 
 # Recode visites - missings--0
@@ -366,7 +374,6 @@ dt_agencia<-etiquetar_valors(dt=dt_agencia,variables_factors=conductor_agencia,f
 # Capturar si l'event ve de dades d'agencia o NO 
 dt_temp<-select(dt_agencia,CIP,TBC_agencia=dt_agencia) %>% unique()
 dades<-dades %>% left_join(dt_temp,by="CIP")
-
 
 
 
@@ -580,10 +587,116 @@ dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
 ```
 
 
-```{r}
+
+
+
+
+
+
+
+
+
+```{r reestructurar}
+
+## Cambio format de dades per fer time depend models
+
+# Llegir dades 
+dt_variables<-
+  readRDS(here::here("dades","dt_variables.rds")) %>% 
+  semi_join(select(dades,CIP),by="CIP")
+
+# Afegeixo HBA1c.valor Baseline
+# 
+dt_temp<-dt_variables %>% bind_rows(
+    dades %>% transmute(CIP,val=as.numeric(HBA1c.valor),cod="HBA1c",dat=lubridate::ymd(dtindex)) %>% filter(val>0)
+    ) 
+
+# Preparo dades 
+# Afegeixo info afegint dades (situacio,dtindex,dtafi) , i HBA1c baseline
+dt_temp<-
+  dt_temp %>% 
+  right_join(select(dades,CIP,situacio,dtindex,datafi,EV.TBC), by="CIP")
+
+
+# Actualitzo event i datafi
+dt_temp<-
+  dt_temp %>% 
+  mutate(TBC= ifelse(is.na(EV.TBC) , 0, 1)) %>% 
+  mutate(situacio= ifelse(TBC==1 ,"TBC" , situacio)) %>% 
+  mutate(datafi=ifelse(TBC==1,EV.TBC,datafi)) %>% 
+  mutate(datafi=as_date(datafi))
+  
+
+# Reestructuro dades a partir de la funció
+dades_long<-
+  dt_temp %>% 
+  Analitica_Temps(grup="HBA1c",
+                    dataini="dat",
+                    datasort="datafi",
+                    endpt="situacio",
+                    bd.dindex="dtindex")
+
 
 
 ```
+
+```{r prep_dades_long}
+
+dades_long<-dades_long %>% mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
+dades_long<-dades_long %>% mutate(val_8 =   ifelse(val<8      , 0, 1))
+dades_long<-dades_long %>% mutate(val_9 =   ifelse(val<9      , 0, 1))
+
+
+```
+
+
+```{r}
+
+
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+cluster(idp),data=dades_long)
+sjPlot::tab_model(fit)
+cox.zph(fit)
+
+
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+cluster(idp),data=dades_long)
+sjPlot::tab_model(fit)
+cox.zph(fit)
+
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+cluster(idp),data=dades_long)
+sjPlot::tab_model(fit)
+cox.zph(fit)
+
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+cluster(idp),data=dades_long)
+sjPlot::tab_model(fit)
+cox.zph(fit)
+
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  pspline(val,2) + +cluster(idp),data=dades_long)
+summary(fit)
+
+sjPlot::tab_model(fit)
+cox.zph(fit)
+
+pspline(hdlc,df = 2)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -605,23 +718,24 @@ Variables a comparar:
    e) no se si rebuscant a la BD de la agencia pots trobar més dades de interes ... per exemple el diagnostic he posat una variable sobre la bacteriologia ... que no acabo de veure clara. 
 
 
+## Resultat 1. 
+
 ```{r}
 
-
+#
 dt_temp<-
   dades %>% filter(event_tbc==1) %>% 
   mutate(HbA1c_7.5_mis=ifelse(is.na(HbA1c_7.5), "Unknown", HbA1c_7.5))
 
-
+#
 descrTable(HbA1c_7.5~ exitus + TIP_TBC + PPD+ BACTERIOL + RADIOLOGIA,
            data = dt_temp, method = 3, show.all =  F) %>% 
-  export2md()
+  export2md(caption = "Summary descriptives table. [DM HbA1c<7.5 versus DM HbA1c>=7.5")
 
-descrTable(HbA1c_7.5_mis~ exitus + TIP_TBC + PPD + BACTERIOL + RADIOLOGIA,
+#
+descrTable(~ exitus + TIP_TBC + PPD + BACTERIOL + RADIOLOGIA,
            data = dt_temp, method = 3, show.all =  T) %>% 
-  export2md()
-
-
+  export2md(caption = "Summary descriptives table. DM amb TB (Tots)")
 
 
 ```
@@ -638,31 +752,29 @@ Amb aquestes variables em poses els HR, IC i p, per poder fer el forest plot de 
 ## TABLE 4 Hazard ratios ajustados según modelo completo
 
 - HR ajustat segons model de riscos competitius Fine & Grey
-- Grup DM versus control, 
-- DM1 DM2, incident and prevalent versus Control
 
 ```{r genero_HR, echo=FALSE, message=FALSE, warning=FALSE, include=T, size="huge",eval=F}
 
-# Estimació de HR complets de riscos competitius
-if (params$metode=="dinamica2") cluster="case.id" else cluster=""
+# Estimació de HR complets de riscos competitius sense Clusters
+cluster=""
+
 # Ajustos
 vector_ajustos<-c("","DM_ajust","DM_ajust2","DM_ajust3","DM_ajust4") %>% 
   stats::setNames(c("Unadjust","Model 1","Model 2","Model 3","Model 4"))  
+
 # Models de COX 
 taula_models_COX<-vector_ajustos %>% purrr::map_df(~
-                                                     extreure_HR(a="grup",x=.x,event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster),.id="Model")
+                                                     extreure_HR(a="HbA1c_7",x=.x,event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster),.id="Model")
 # Models de Riscos Comepetitius FG
 # llista de models
-taula_models_FG<-vector_ajustos %>% purrr::map_df(~ Estima_HR_RCrisk_clusters(dades,.x,a="grup",failcode = "Event",cencode = "End of follow-up"),.id="Model")
+
+taula_models_FG<-
+  vector_ajustos %>% 
+  purrr::map_df(~ Estima_HR_RCrisk_clusters(dades,.x,a="HbA1c_7",failcode = "Event",cencode = "End of follow-up"),.id="Model")
+
 # dades %>% select(grup,grup2)
 # printar models
 taula_models<-taula_models_FG %>% bind_rows(taula_models_COX)
-
-
-extreure_HR(a="grup",x="",event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster) %>% mutate(adjust="Unadjusted")
-
-Estima_HR_RCrisk_clusters(dades,"DM_ajust",a="grup",failcode = "Event",cencode = "End of follow-up")
-
 
 
 
