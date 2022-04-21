@@ -2,7 +2,7 @@
 # GENERAR INFORME  ##
 #####################
 #
-#13.04.2022#
+#21.04.2022#
 #
 # TAULA1
 #i)     MACRO:= CI,AVC,ARTPER,COM_OFT
@@ -166,27 +166,27 @@ rmarkdown::render("./codi/2_preparacio_TBC.Rmd",params = list(metode=metode))
 ###########   Generar informe 
 subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
 rmarkdown::render("./codi/3_analisis_TBC2B.Rmd", 
-                  output_file = paste0("Informe_Cohort_Din_POBLACIO_",Sys.Date()),
+                  output_file = paste0("Informe_Cohort_Din_POBLACIO1_",Sys.Date()),
                   output_dir = "resultats",
                   params=list(metode=metode,subtitul=subtitul, test=FALSE),
                   envir = parent.frame() # Truc per que render dins funció no peti 
 )
 
-###########   Generar informe 
-subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
-rmarkdown::render("./codi/3_analisis_TBC2C.Rmd", 
-                  output_file = paste0("Informe_Cohort_Din_Dependent_Temps_POBLACIO_",Sys.Date()),
-                  output_dir = "resultats",
-                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
-                  envir = parent.frame() # Truc per que render dins funció no peti 
-)
+############   Generar informe 
+#subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
+#rmarkdown::render("./codi/3_analisis_TBC2C.Rmd", 
+#                  output_file = paste0("Informe_Cohort_Din_Dependent_Temps_POBLACIO_",Sys.Date()),
+#                  output_dir = "resultats",
+#                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
+#                  envir = parent.frame() # Truc per que render dins funció no peti 
+#)
 
 
 
 
 subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
 rmarkdown::render("./codi/3_analisis_TBC_Glicada.Rmd", 
-                  output_file = paste0("Informe_Cohort_Din_POBLACIO_",Sys.Date()),
+                  output_file = paste0("Informe_Cohort_Din_POBLACIO2_",Sys.Date()),
                   output_dir = "resultats",
                   params=list(metode=metode,subtitul=subtitul, test=FALSE),
                   envir = parent.frame() # Truc per que render dins funció no peti 
@@ -197,7 +197,7 @@ rmarkdown::render("./codi/3_analisis_TBC_Glicada.Rmd",
 
 subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
 rmarkdown::render("./codi/3_analisis_TBC_Glicada_timedepen.Rmd", 
-                  output_file = paste0("Informe_Cohort_Din_POBLACIO_",Sys.Date()),
+                  output_file = paste0("Informe_Cohort_Din_POBLACIO3_",Sys.Date()),
                   output_dir = "resultats",
                   params=list(metode=metode,subtitul=subtitul, test=FALSE),
                   envir = parent.frame() # Truc per que render dins funció no peti 
@@ -222,30 +222,48 @@ rm(list=ls())
 
 library("heaven")
 
+
 metode="dinamica2"
 rmarkdown::render("./codi/1_lectura_TBC.Rmd",params = list(metode=metode,cas_com_controls=TRUE))
 rmarkdown::render("./codi/2_preparacio_TBC.Rmd",params = list(metode=metode))
 
-#
 
-#gc()
+
 ###########   Generar informe 
-metode="dinamica2"
-subtitul="Cohorte DINÁMICA: Controles sin reemplazo una MUESTRA!"
+subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
 rmarkdown::render("./codi/3_analisis_TBC2B.Rmd", 
-                  output_file = paste0("Informe_Cohort_Din_MOSTRA_",Sys.Date()),
+                  output_file = paste0("Informe_Cohort_Din_MOSTRA1_",Sys.Date()),
+                  output_dir = "resultats",
+                  params=list(metode=metode,subtitul=subtitul, test=TRUE),
+                  envir = parent.frame() # Truc per que render dins funció no peti 
+)
+
+############   Generar informe 
+#subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
+#rmarkdown::render("./codi/3_analisis_TBC2C.Rmd", 
+#                  output_file = paste0("Informe_Cohort_Din_Dependent_Temps_POBLACIO_",Sys.Date()),
+#                  output_dir = "resultats",
+#                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
+#                  envir = parent.frame() # Truc per que render dins funció no peti 
+#)
+
+
+
+
+subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
+rmarkdown::render("./codi/3_analisis_TBC_Glicada.Rmd", 
+                  output_file = paste0("Informe_Cohort_Din_MOSTRA2_",Sys.Date()),
                   output_dir = "resultats",
                   params=list(metode=metode,subtitul=subtitul, test=TRUE),
                   envir = parent.frame() # Truc per que render dins funció no peti 
 )
 
 
-#gc()
-###########   Generar informe 
-metode="dinamica2"
-subtitul="Cohorte DINÁMICA: Controles sin reemplazo una MUESTRA!"
-rmarkdown::render("./codi/3_analisis_TBC2C.Rmd", 
-                  output_file = paste0("Informe_Cohort_Din_Dependent_Temps_MOSTRA_",Sys.Date()),
+
+
+subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
+rmarkdown::render("./codi/3_analisis_TBC_Glicada_timedepen.Rmd", 
+                  output_file = paste0("Informe_Cohort_Din_MOSTRA3_",Sys.Date()),
                   output_dir = "resultats",
                   params=list(metode=metode,subtitul=subtitul, test=TRUE),
                   envir = parent.frame() # Truc per que render dins funció no peti 
