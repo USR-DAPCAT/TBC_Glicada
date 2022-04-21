@@ -183,7 +183,10 @@ if (params$test==T) {
 ```
 
 
-```{r funcions propies}
+```{r funcions propies, eval=F}
+
+
+
 
 
 Analitica_Temps<-function(
