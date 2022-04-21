@@ -184,6 +184,30 @@ rmarkdown::render("./codi/3_analisis_TBC2C.Rmd",
 
 
 
+subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
+rmarkdown::render("./codi/3_analisis_TBC_Glicada.Rmd", 
+                  output_file = paste0("Informe_Cohort_Din_POBLACIO_",Sys.Date()),
+                  output_dir = "resultats",
+                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
+                  envir = parent.frame() # Truc per que render dins funció no peti 
+)
+
+
+
+
+subtitul="Cohorte DINÁMICA: Controles sin reemplazo"
+rmarkdown::render("./codi/3_analisis_TBC_Glicada_timedepen.Rmd", 
+                  output_file = paste0("Informe_Cohort_Din_POBLACIO_",Sys.Date()),
+                  output_dir = "resultats",
+                  params=list(metode=metode,subtitul=subtitul, test=FALSE),
+                  envir = parent.frame() # Truc per que render dins funció no peti 
+)
+
+
+
+
+
+
 #03.03.2022
 
 

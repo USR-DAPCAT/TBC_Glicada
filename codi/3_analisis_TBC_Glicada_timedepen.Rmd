@@ -317,7 +317,7 @@ Analitica_Temps<-function(
 
 # construim una nova base de dades a partir de "dades", per aplicar la FUNCIO ANALITICA.
 
-dades<-dadesDM
+#dades<-dadesDM
 
 dades$dtindex2<-as.character(dades$dtindex)
 dades$any_index<-substr(dades$dtindex2,1,4)
@@ -329,12 +329,13 @@ dades2<-dades%>%select(idp,sexe,edat)
 
 #dades_analitiques_DM<-dades%>%filter(grup=="Diabetis")
 
-<<<<<<< HEAD:codi/3_analisis_TBC_Glicada_timedepen.Rmd
-dt_variables2<-dt_variables %>% mutate(idp=CIP) %>% select(-CIP) %>% 
-  left_join(dades,by="idp")%>%
-=======
+#<<<<<<< HEAD:codi/3_analisis_TBC_Glicada_timedepen.Rmd
+#dt_variables2<-dt_variables %>% mutate(idp=CIP) %>% select(-CIP) %>% 
+#  left_join(dades,by="idp")%>%
+
+  
+ 
 dt_variables2<-dt_variables%>%mutate(idp=CIP)%>%select(-CIP)%>%left_join(dades,by="idp")%>%
->>>>>>> d9ceb081ccb3a0fa70d7bbc2f84810c92518a4e2:codi/3_analisis_TBC2C.Rmd
   select(idp,sexe,dtindex,cod,dat,val,situacio,datafi,EV.TBC,HBA1c.valor)
 
 # fer-ho!!
@@ -403,12 +404,6 @@ analitiques_temps<-Analitica_Temps(
   endpt="situacio",
   bd.dindex="dtindex" )
 
-
-<<<<<<< HEAD:codi/3_analisis_TBC_Glicada_timedepen.Rmd
-=======
-
-
->>>>>>> d9ceb081ccb3a0fa70d7bbc2f84810c92518a4e2:codi/3_analisis_TBC2C.Rmd
 
 
 
@@ -676,15 +671,13 @@ summary(fit1b)
 cox.zph(fit1b)
 
 
-<<<<<<< HEAD:codi/3_analisis_TBC_Glicada_timedepen.Rmd
+
 # 
 fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+edat+sexe+cluster(idp),data=analitiques_temps)
 summary(fit2)
 cox.zph(fit2)
 sjPlot::tab_model(fit2)
 
-=======
->>>>>>> d9ceb081ccb3a0fa70d7bbc2f84810c92518a4e2:codi/3_analisis_TBC2C.Rmd
 
 
 ```

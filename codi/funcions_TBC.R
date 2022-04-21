@@ -63,13 +63,13 @@ Esquema_ggplot<-function(dt=dt_temp,datainicial="data",datafinal="datafi",id="id
 
 extreure_HR<-function(a="grup2",x="DM_ajust",c=c,...) { 
   
-  a="HbA1c_7"
-  x=""
-  event = "event_tbc"
-  t="temps_tbc"
-  d=dades
-  taulavariables = conductor_variables
-  c=cluster
+  # a="HbA1c_7"
+  # x=""
+  # event = "event_tbc"
+  # t="temps_tbc"
+  # d=dades
+  # taulavariables = conductor_variables
+  # c=cluster
   
   if (x!="") covariables<-c(a,extreure.variables(x,conductor_variables)) %>% unique() %>% paste0(collapse = ", ")
   if (x=="") covariables<-c(a) 

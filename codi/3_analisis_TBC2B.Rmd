@@ -638,10 +638,7 @@ descrTable(formu,data=dades,show.p.overall = F,show.n = T,method = 2,Q1=0,Q3=1) 
 ```{r resultats1, include=F, warning=FALSE,echo=FALSE, message=F,eval = T}
 formu<-formula_compare(x="basales",y="grup",taulavariables = conductor_variables)
 T1_BASAL<-descrTable(formu,data=dades,show.p.overall = T,show.n = T, hide.no = T,hide = "No")
-
-
 export2md(T1_BASAL,caption = "Descriptiva de caracterítiques basals entre grups (Frequencia, Mitjana (SD))")
-
 # # Validació missing age 
 # dades %>% filter(is.na(age)) %>% select(age,dNaixement,dtindex)
 # dt_ecap %>% select(age,dNaixement,dtindex)
@@ -1166,11 +1163,15 @@ res.cox %>% sjPlot::tab_model(show.p = FALSE)
 #if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor, data=dadesDM) 
 #res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo 6")
 
+library(dplyr)
 
 # Ajustos
 vector_ajustos<-c("ajuste01","ajuste02","ajuste03") %>%stats::setNames(c("Modelo sin ajustar","Modelo : HbA1c>=7.5+Sexo","Modelo : HbA1c>=7.5+Sexo+Edad"))  
 # Models de COX 
 taula_models_COX<-vector_ajustos %>% purrr::map_df(~extreure_HR(a="HbA1c_7.5",x=.x,event = "event_tbc",t="temps_tbc",d=dadesDM,taulavariables = conductor_variables,c=""),.id="Model")
+
+
+
 taula_models_COX%>% 
   kable(digits = 3,caption = "Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC") %>% 
   kableExtra::kable_styling()
