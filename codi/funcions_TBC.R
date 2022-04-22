@@ -336,6 +336,10 @@ Analitica_Temps<-function(
   bd.dindex="dtindex") {
   
   
+  
+ 
+  
+  
   # dt=dt_variables  
   # grup="HBA1c"
   # dataini="dat"
@@ -345,7 +349,7 @@ Analitica_Temps<-function(
   
 
   dt<-dt %>%
-    select(idp=CIP,cod=cod,val=val,dat=sym(!!dataini),datafi=sym(!!datasort),situacio=sym(!!endpt),dtindex=sym(!!bd.dindex)) %>% 
+    select(idp,cod=cod,val=val,dat=sym(!!dataini),datafi=sym(!!datasort),situacio=sym(!!endpt),dtindex=sym(!!bd.dindex)) %>% 
     filter(cod==!!grup) %>% 
     mutate(dtindex=lubridate::ymd(dtindex)) %>% 
     arrange(idp,dat) %>% 
