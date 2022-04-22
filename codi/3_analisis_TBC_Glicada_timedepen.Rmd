@@ -431,6 +431,37 @@ analitiques_temps<-analitiques_temps %>% mutate(edat_CAT=case_when(edat<75 ~ "1.
 
 
 
+analitiques_temps2<-Analitica_Temps(
+  dt=dades_long ,  
+  grup="HBA1c",
+  dataini="dat",
+  datasort="datafi",
+  endpt="situacio",
+  bd.dindex="dtindex" )
+
+
+
+
+# noves recodificacions per fer el posterior Analisi.
+
+analitiques_temps2<-analitiques_temps2%>%left_join(dades2,by="idp")
+
+analitiques_temps2<-analitiques_temps2%>%mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
+analitiques_temps2<-analitiques_temps2%>%mutate(val_8 =   ifelse(val<8      , 0, 1))
+analitiques_temps2<-analitiques_temps2%>%mutate(val_9 =   ifelse(val<9      , 0, 1))
+
+
+analitiques_temps2<-analitiques_temps2%>%mutate(val2 = ifelse(val<8  , 0, 1))
+analitiques_temps2<-analitiques_temps2%>%mutate(val3 = ifelse(val<9  , 0, 1))
+
+#analitiques_temps
+#analitiques_temps$situacio
+
+analitiques_temps2<-analitiques_temps2 %>% mutate(edat_CAT=case_when(edat<75 ~ "1.<75", edat >=75~ "2.>=75" ))
+
+
+
+
 
 ```
 
@@ -710,13 +741,27 @@ fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp
 summary(fit3)
 cox.zph(fit3)
 
+
+#iii)
+fit3a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps2)
+summary(fit3a)
+cox.zph(fit3a)
+
+
 #iv)
 fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
 summary(fit4)
 cox.zph(fit4)
+#plot(cox.zph(fit4))
 
 
-plot(cox.zph(fit4))
+#iv)
+fit4a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit4a)
+cox.zph(fit4a)
+
+
+#plot(cox.zph(fit4a))
 
 
 
@@ -733,9 +778,14 @@ plot(cox.zph(fit4))
 fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat_CAT+strata(sexe)+cluster(idp),data=analitiques_temps)
 summary(fit5)
 cox.zph(fit5)
+#plot(cox.zph(fit5))
 
 
-plot(cox.zph(fit5))
+#v)
+fit5a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat_CAT+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit5a)
+cox.zph(fit5a)
+
 
 ```
 

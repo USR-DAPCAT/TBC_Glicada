@@ -584,7 +584,7 @@ dades<-dades %>% mutate(
 dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
 ```
 
-```{r reestructurar}
+```{r reestructurar, eval=TRUE}
 
 ## Cambio format de dades per fer time depend models
 
@@ -613,12 +613,16 @@ dt_temp<-
   mutate(TBC= ifelse(is.na(EV.TBC) , 0, 1)) %>% 
   mutate(situacio= ifelse(TBC==1 ,"TBC" , situacio)) %>% 
   mutate(datafi=ifelse(TBC==1,EV.TBC,datafi)) %>% 
-  mutate(datafi=as_date(datafi))
+  mutate(datafi=as_date(datafi)) %>%
+  mutate(idp=CIP)
   
 
+dades_long<-dt_temp
+
+
 # Reestructuro dades a partir de la funció
-dades_long<-
-  dt_temp %>% 
+dades_long2<-
+  dades_long %>% 
   Analitica_Temps(grup="HBA1c",
                     dataini="dat",
                     datasort="datafi",
@@ -631,41 +635,44 @@ dades_long<-
 
 ```{r prep_dades_long}
 
-dades_long<-dades_long %>% mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
-dades_long<-dades_long %>% mutate(val_8 =   ifelse(val<8      , 0, 1))
-dades_long<-dades_long %>% mutate(val_9 =   ifelse(val<9      , 0, 1))
+dades_long2<-dades_long2 %>% mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
+dades_long2<-dades_long2 %>% mutate(val_8 =   ifelse(val<8      , 0, 1))
+dades_long2<-dades_long2 %>% mutate(val_9 =   ifelse(val<9      , 0, 1))
 
 
 ```
 
 
-```{r}
+```{r, eval=TRUE, include=T}
 
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
-cox.zph(fit)
+fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+cluster(idp),data=dades_long2)
+summary(fit1)
+#sjPlot::tab_model(fit1)
+cox.zph(fit1)
 
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
-cox.zph(fit)
+fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+cluster(idp),data=dades_long2)
+summary(fit2)
+#sjPlot::tab_model(fit2)
+cox.zph(fit2)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
-cox.zph(fit)
+fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+cluster(idp),data=dades_long2)
+summary(fit3)
+#sjPlot::tab_model(fit3)
+cox.zph(fit3)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
-cox.zph(fit)
+fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+cluster(idp),data=dades_long2)
+summary(fit4)
+#sjPlot::tab_model(fit4)
+cox.zph(fit4)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  pspline(val,2) + +cluster(idp),data=dades_long)
-summary(fit)
+fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  pspline(val,2) + +cluster(idp),data=dades_long2)
+summary(fit5)
+#sjPlot::tab_model(fit5)
+cox.zph(fit5)
 
-#sjPlot::tab_model(fit)
-cox.zph(fit)
 
-#pspline(hdlc,df = 2)
 
 ```
 
@@ -689,7 +696,7 @@ Variables a comparar:
 
 ## Resultat 1. 
 
-```{r}
+```{r, eval=TRUE, include=T}
 
 #
 dt_temp<-
@@ -1747,7 +1754,7 @@ res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final6:Analisis Mult
 dir.create(here::here("dades/output_dinamic2"))
 #dir.create(here::here("dades/output_PS"))
 
-save(dades,dt_variables ,file=here::here(dir_output,"output5.Rdata"))
+save(dades,dt_variables,dades_long,file=here::here(dir_output,"output5.Rdata"))
 
 
 
