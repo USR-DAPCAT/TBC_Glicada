@@ -595,6 +595,10 @@ dt_variables<-
 
 # Afegeixo HBA1c.valor Baseline
 # 
+
+
+
+
 dt_temp<-dt_variables %>% bind_rows(
     dades %>% transmute(CIP,val=as.numeric(HBA1c.valor),cod="HBA1c",dat=lubridate::ymd(dtindex)) %>% filter(val>0)
     ) 

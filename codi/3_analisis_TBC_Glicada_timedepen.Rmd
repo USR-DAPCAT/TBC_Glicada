@@ -397,7 +397,7 @@ dt_variables2<-dt_variables2%>%arrange(cod ,dat)
   #bd.dindex="dtindex"
 
 
-# aliquem la funcio
+# aliquem la funcio , dades Rai!
 
 analitiques_temps<-Analitica_Temps(
   dt=dt_variables2 ,  
@@ -429,6 +429,7 @@ analitiques_temps<-analitiques_temps %>% mutate(edat_CAT=case_when(edat<75 ~ "1.
 
 
 
+# aliquem la funcio , dades Jordi R.!
 
 
 analitiques_temps2<-Analitica_Temps(
@@ -698,13 +699,22 @@ summary(fit1)
 cox.zph(fit1)
 #plot(cox.zph(fit1))
 
+#i)
+fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+sexe+edat+cluster(idp),data=analitiques_temps2)
+summary(fit1)
+cox.zph(fit1)
+#plot(cox.zph(fit1))
+
+
 
 
 fit1b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
 summary(fit1b)
 cox.zph(fit1b)
 
-
+fit1b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit1b)
+cox.zph(fit1b)
 
 # 
 fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+edat+sexe+cluster(idp),data=analitiques_temps)
@@ -712,7 +722,11 @@ summary(fit2)
 cox.zph(fit2)
 sjPlot::tab_model(fit2)
 
-
+# 
+fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+edat+sexe+cluster(idp),data=analitiques_temps2)
+summary(fit2)
+cox.zph(fit2)
+sjPlot::tab_model(fit2)
 
 ```
 
@@ -725,10 +739,20 @@ fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp
 summary(fit2)
 cox.zph(fit2)
 
+#ii)
+fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp),data=analitiques_temps2)
+summary(fit2)
+cox.zph(fit2)
+
+
 fit2b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
 summary(fit2b)
 cox.zph(fit2b)
 
+
+fit2b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit2b)
+cox.zph(fit2b)
 
 ```
 
@@ -736,7 +760,7 @@ cox.zph(fit2b)
 
 ```{r MODEL_COX3, include=T,eval = TRUE}
 
-#iii)
+#iii) 
 fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps)
 summary(fit3)
 cox.zph(fit3)

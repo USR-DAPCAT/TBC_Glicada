@@ -2,7 +2,7 @@
 # GENERAR INFORME  ##
 #####################
 #
-#22.04.2022#
+#25.04.2022#
 #
 # TAULA1
 #i)     MACRO:= CI,AVC,ARTPER,COM_OFT

@@ -340,12 +340,12 @@ Analitica_Temps<-function(
  
   
   
-  # dt=dt_variables  
-  # grup="HBA1c"
-  # dataini="dat"
-  # datasort="datafi"
-  # endpt="situacio"
-  # bd.dindex="dtindex"
+   #dt=dt_variables  
+   #grup="HBA1c"
+   #dataini="dat"
+   #datasort="datafi"
+   #endpt="situacio"
+   #bd.dindex="dtindex"
   
 
   dt<-dt %>%
