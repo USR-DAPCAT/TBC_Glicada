@@ -186,7 +186,7 @@ if (params$test==T) {
 ```
 
 
-```{r funcions propies, eval=F}
+```{r funcions propies, eval=TRUE}
 
 
 
@@ -482,9 +482,20 @@ dades_long<-dades_long%>%arrange(idp,cod,dat)
   #bd.dindex="dtindex"
 
 
+
+analitiques_temps1<-Analitica_Temps(
+  dt=dades_long ,  
+  grup="HBA1c",
+  dataini="dat",
+  datasort="datafi",
+  endpt="situacio",
+  bd.dindex="dtindex" )
+
+
+
 # aliquem la funcio , dades Rai!
 
-analitiques_temps_rai<-Analitica_Temps2(
+analitiques_temps2<-Analitica_Temps2(
   dt=dt_variables2 ,  
   grup="HBA1c",
   dataini="dat",
@@ -492,13 +503,6 @@ analitiques_temps_rai<-Analitica_Temps2(
   endpt="situacio",
   bd.dindex="dtindex" )
 
-analitiques_temps_jordi<-Analitica_Temps(
-  dt=dades_long ,  
-  grup="HBA1c",
-  dataini="dat",
-  datasort="datafi",
-  endpt="situacio",
-  bd.dindex="dtindex" )
 
 
 
@@ -507,52 +511,25 @@ analitiques_temps_jordi<-Analitica_Temps(
 
 # noves recodificacions per fer el posterior Analisi.
 
-analitiques_temps<-analitiques_temps%>%left_join(dades2,by="idp")
-
-analitiques_temps<-analitiques_temps%>%mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
-analitiques_temps<-analitiques_temps%>%mutate(val_8 =   ifelse(val<8      , 0, 1))
-analitiques_temps<-analitiques_temps%>%mutate(val_9 =   ifelse(val<9      , 0, 1))
-
-
-analitiques_temps<-analitiques_temps%>%mutate(val2 = ifelse(val<8  , 0, 1))
-analitiques_temps<-analitiques_temps%>%mutate(val3 = ifelse(val<9  , 0, 1))
-
-#analitiques_temps
-#analitiques_temps$situacio
-
-analitiques_temps<-analitiques_temps %>% mutate(edat_CAT=case_when(edat<75 ~ "1.<75", edat >=75~ "2.>=75" ))
-
-
-
-# aliquem la funcio , dades Jordi R.!
-
-
-analitiques_temps2<-Analitica_Temps(
-  dt=dades_long ,  
-  grup="HBA1c",
-  dataini="dat",
-  datasort="datafi",
-  endpt="situacio",
-  bd.dindex="dtindex" )
+analitiques_temps1<-analitiques_temps1%>%left_join(dades2,by="idp")
+analitiques_temps1<-analitiques_temps1%>%mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
+analitiques_temps1<-analitiques_temps1%>%mutate(val_8 =   ifelse(val<8      , 0, 1))
+analitiques_temps1<-analitiques_temps1%>%mutate(val_9 =   ifelse(val<9      , 0, 1))
+analitiques_temps1<-analitiques_temps1%>%mutate(val2 = ifelse(val<8  , 0, 1))
+analitiques_temps1<-analitiques_temps1%>%mutate(val3 = ifelse(val<9  , 0, 1))
+analitiques_temps1<-analitiques_temps1 %>% mutate(edat_CAT=case_when(edat<75 ~ "1.<75", edat >=75~ "2.>=75" ))
 
 
 
 
-# noves recodificacions per fer el posterior Analisi.
+
 
 analitiques_temps2<-analitiques_temps2%>%left_join(dades2,by="idp")
-
 analitiques_temps2<-analitiques_temps2%>%mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
 analitiques_temps2<-analitiques_temps2%>%mutate(val_8 =   ifelse(val<8      , 0, 1))
 analitiques_temps2<-analitiques_temps2%>%mutate(val_9 =   ifelse(val<9      , 0, 1))
-
-
 analitiques_temps2<-analitiques_temps2%>%mutate(val2 = ifelse(val<8  , 0, 1))
 analitiques_temps2<-analitiques_temps2%>%mutate(val3 = ifelse(val<9  , 0, 1))
-
-#analitiques_temps
-#analitiques_temps$situacio
-
 analitiques_temps2<-analitiques_temps2 %>% mutate(edat_CAT=case_when(edat<75 ~ "1.<75", edat >=75~ "2.>=75" ))
 
 
@@ -784,39 +761,40 @@ library(survival)
 
 
 #i)
-fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+sexe+edat+cluster(idp),data=analitiques_temps)
-summary(fit1)
-cox.zph(fit1)
+fit1a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+sexe+edat+cluster(idp),data=analitiques_temps1)
+summary(fit1a)
+cox.zph(fit1a)
 #plot(cox.zph(fit1))
 
 #i)
-fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+sexe+edat+cluster(idp),data=analitiques_temps2)
-summary(fit1)
-cox.zph(fit1)
+fit1b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+sexe+edat+cluster(idp),data=analitiques_temps2)
+summary(fit1b)
+cox.zph(fit1b)
 #plot(cox.zph(fit1))
 
 
 
+fit2a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+edat+strata(sexe)+cluster(idp),data=analitiques_temps1)
+summary(fit2a)
+cox.zph(fit2a)
 
-fit1b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
-summary(fit1b)
-cox.zph(fit1b)
+fit2b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit2b)
+cox.zph(fit2b)
 
-fit1b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
-summary(fit1b)
-cox.zph(fit1b)
 
-# 
-fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+edat+sexe+cluster(idp),data=analitiques_temps)
-summary(fit2)
-cox.zph(fit2)
-sjPlot::tab_model(fit2)
 
 # 
-fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+edat+sexe+cluster(idp),data=analitiques_temps2)
-summary(fit2)
-cox.zph(fit2)
-sjPlot::tab_model(fit2)
+fit3a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+edat+sexe+cluster(idp),data=analitiques_temps1)
+summary(fit3a)
+cox.zph(fit3a)
+sjPlot::tab_model(fit3a)
+
+# 
+fit3b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val+edat+sexe+cluster(idp),data=analitiques_temps2)
+summary(fit3b)
+cox.zph(fit3b)
+sjPlot::tab_model(fit3b)
 
 ```
 
@@ -825,24 +803,24 @@ sjPlot::tab_model(fit2)
 ```{r MODEL_COX2, include=T,eval = TRUE}
 
 #ii)
-fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp),data=analitiques_temps)
-summary(fit2)
-cox.zph(fit2)
+fit4a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp),data=analitiques_temps1)
+summary(fit4a)
+cox.zph(fit4a)
 
 #ii)
-fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp),data=analitiques_temps2)
-summary(fit2)
-cox.zph(fit2)
+fit4b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+sexe+edat+cluster(idp),data=analitiques_temps2)
+summary(fit4b)
+cox.zph(fit4b)
 
 
-fit2b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
-summary(fit2b)
-cox.zph(fit2b)
+fit5a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+edat+strata(sexe)+cluster(idp),data=analitiques_temps1)
+summary(fit5a)
+cox.zph(fit5a)
 
 
-fit2b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
-summary(fit2b)
-cox.zph(fit2b)
+fit5b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit5b)
+cox.zph(fit5b)
 
 ```
 
@@ -851,28 +829,28 @@ cox.zph(fit2b)
 ```{r MODEL_COX3, include=T,eval = TRUE}
 
 #iii) 
-fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps)
-summary(fit3)
-cox.zph(fit3)
+fit6a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps1)
+summary(fit6a)
+cox.zph(fit6a)
 
 
 #iii)
-fit3a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps2)
-summary(fit3a)
-cox.zph(fit3a)
+fit6b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+sexe+edat+cluster(idp),data=analitiques_temps2)
+summary(fit6b)
+cox.zph(fit6b)
 
 
 #iv)
-fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat+strata(sexe)+cluster(idp),data=analitiques_temps)
-summary(fit4)
-cox.zph(fit4)
+fit7a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat+strata(sexe)+cluster(idp),data=analitiques_temps1)
+summary(fit7a)
+cox.zph(fit7a)
 #plot(cox.zph(fit4))
 
 
 #iv)
-fit4a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
-summary(fit4a)
-cox.zph(fit4a)
+fit7b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit7b)
+cox.zph(fit7b)
 
 
 #plot(cox.zph(fit4a))
@@ -889,16 +867,16 @@ cox.zph(fit4a)
 
 
 #v)
-fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat_CAT+strata(sexe)+cluster(idp),data=analitiques_temps)
-summary(fit5)
-cox.zph(fit5)
+fit8a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat_CAT+strata(sexe)+cluster(idp),data=analitiques_temps1)
+summary(fit8a)
+cox.zph(fit8a)
 #plot(cox.zph(fit5))
 
 
 #v)
-fit5a <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat_CAT+strata(sexe)+cluster(idp),data=analitiques_temps2)
-summary(fit5a)
-cox.zph(fit5a)
+fit8b <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9+edat_CAT+strata(sexe)+cluster(idp),data=analitiques_temps2)
+summary(fit8b)
+cox.zph(fit8b)
 
 
 ```

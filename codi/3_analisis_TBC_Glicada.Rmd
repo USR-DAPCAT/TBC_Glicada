@@ -593,18 +593,15 @@ dt_variables<-
   readRDS(here::here("dades","dt_variables.rds")) %>% 
   semi_join(select(dades,CIP),by="CIP")
 
+
+
+
 # Afegeixo HBA1c.valor Baseline
 # 
-
-
-
 #canviat 26.4.2022
-#dt_temp<-dt_variables %>% bind_rows(
-#    dades %>% transmute(CIP,val=as.numeric(HBA1c.valor),cod="HBA1c",dat=lubridate::ymd(dtindex)) %>% filter(val>0) )
-    
+dt_temp<-dt_variables %>% bind_rows(
+    dades %>% transmute(CIP,val=as.numeric(HBA1c.valor),cod="HBA1c",dat=lubridate::ymd(dtindex)) %>% filter(val>0) )
 
-
-dt_temp<-dt_variables 
 
 # Preparo dades 
 # Afegeixo info afegint dades (situacio,dtindex,dtafi) , i HBA1c baseline
