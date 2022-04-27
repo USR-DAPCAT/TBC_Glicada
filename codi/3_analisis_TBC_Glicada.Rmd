@@ -584,7 +584,7 @@ dades<-dades %>% mutate(
 dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
 ```
 
-```{r reestructurar, eval=TRUE}
+```{r Reestructurar, eval=TRUE}
 
 ## Cambio format de dades per fer time depend models
 
@@ -598,10 +598,13 @@ dt_variables<-
 
 
 
+#canviat 26.4.2022
+#dt_temp<-dt_variables %>% bind_rows(
+#    dades %>% transmute(CIP,val=as.numeric(HBA1c.valor),cod="HBA1c",dat=lubridate::ymd(dtindex)) %>% filter(val>0) )
+    
 
-dt_temp<-dt_variables %>% bind_rows(
-    dades %>% transmute(CIP,val=as.numeric(HBA1c.valor),cod="HBA1c",dat=lubridate::ymd(dtindex)) %>% filter(val>0)
-    ) 
+
+dt_temp<-dt_variables 
 
 # Preparo dades 
 # Afegeixo info afegint dades (situacio,dtindex,dtafi) , i HBA1c baseline
@@ -622,6 +625,8 @@ dt_temp<-
   
 
 dades_long<-dt_temp
+dades_long<-dades_long%>%filter(!is.na(val))
+
 
 
 # Reestructuro dades a partir de la funció
@@ -1759,6 +1764,11 @@ dir.create(here::here("dades/output_dinamic2"))
 #dir.create(here::here("dades/output_PS"))
 
 save(dades,dt_variables,dades_long,file=here::here(dir_output,"output5.Rdata"))
+
+
+
+
+
 
 
 

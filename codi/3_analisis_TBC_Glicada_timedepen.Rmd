@@ -147,7 +147,7 @@ subtitle: "`r params$subtitul`"
 - Possible infraregistro de diagnosticos en 2007
 - Alto número de valores faltantes en covariables
 
-```{r setup, include = FALSE}
+```{r setup, include = TRUE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, include=F,size="huge")
 #library(epiR)
 
@@ -177,8 +177,11 @@ load(here::here(dir_output,"output5.Rdata"))
 
 ```{r mostreigtest}
 if (params$test==T) {
-  dt_temp<-dades %>% select(case.id) %>% sample_n(2000)
-  dades<-dades %>% semi_join(dt_temp)
+  dt_temp<-dades %>% select(case.id,CIP) %>% sample_n(10)
+  dt_temp2<-dt_temp%>% select(case.id)
+  dt_temp3<-dt_temp%>% select(CIP)
+  dades<-dades %>% semi_join(dt_temp2)
+  dades_long<-dades_long%>% semi_join(dt_temp3)
     }
 ```
 
@@ -189,7 +192,7 @@ if (params$test==T) {
 
 
 
-Analitica_Temps<-function(
+Analitica_Temps2<-function(
   dt=dt_variables2 ,  
   grup="HBA1c",
   dataini="dat",
@@ -309,7 +312,7 @@ Analitica_Temps<-function(
 
 # Tabla 6. Modelos multivariante (variable HbA1c dependiente del tiempo) de los factores que pueden influir en la aparición de una nueva TBC, en una Población Diabetica
 
-```{r, include=F,eval = TRUE}
+```{r Reestructurar2, eval=TRUE}
 
 #############
 #[26.3.2021]#
@@ -332,14 +335,19 @@ dades2<-dades%>%select(idp,sexe,edat)
 
 #dades_analitiques_DM<-dades%>%filter(grup=="Diabetis")
 
-#<<<<<<< HEAD:codi/3_analisis_TBC_Glicada_timedepen.Rmd
+
 #dt_variables2<-dt_variables %>% mutate(idp=CIP) %>% select(-CIP) %>% 
 #  left_join(dades,by="idp")%>%
 
   
  
-dt_variables2<-dt_variables%>%mutate(idp=CIP)%>%select(-CIP)%>%left_join(dades,by="idp")%>%
-  select(idp,sexe,dtindex,cod,dat,val,situacio,datafi,EV.TBC,HBA1c.valor)
+#dt_variables2<-dt_variables%>%mutate(idp=CIP)%>%select(-CIP)%>%left_join(dades,by="idp")%>%
+#  select(idp,sexe,dtindex,cod,dat,val,situacio,datafi,EV.TBC,HBA1c.valor)
+
+
+dt_variables2<-dt_variables%>%mutate(idp=CIP)%>%left_join(dades,by="CIP")%>%
+  select(CIP,sexe,dtindex,cod,dat,val,situacio,datafi,EV.TBC,HBA1c.valor)
+
 
 # fer-ho!!
 
@@ -379,8 +387,85 @@ dt_variables2$datafi<-paste0(dt_variables2$ANY2,dt_variables2$MES2,dt_variables2
 dt_variables2$datafi<-as.numeric(dt_variables2$datafi)
 
 
-dt_variables2<-dt_variables2%>%select(idp,cod,dat,val,situacio,datafi,dtindex,HBA1c.valor)
-dt_variables2<-dt_variables2%>%arrange(cod ,dat)
+dt_variables2<-dt_variables2%>%select(idp=CIP,CIP,cod,dat,val,situacio,datafi,dtindex,HBA1c.valor)
+#dt_variables2<-dt_variables2%>%arrange(cod ,dat)
+dt_variables2<- dt_variables2%>%filter(!is.na(val))
+
+
+dt_variables2<-dt_variables2%>%arrange(idp,cod,dat)
+
+
+dades_long<-dades_long%>%arrange(idp,cod,dat)
+
+
+
+
+
+
+
+
+#JORDI
+
+## Cambio format de dades per fer time depend models
+
+# Llegir dades :
+
+#dt_variables<-
+#  readRDS(here::here("dades","dt_variables.rds")) %>% 
+#  semi_join(select(dades,CIP),by="CIP")
+
+# Afegeixo HBA1c.valor Baseline
+# 
+
+
+######################################################################################################################
+#canviat 26.4.2022
+#dt_temp<-dt_variables %>% bind_rows(
+#    dades %>% transmute(CIP,val=as.numeric(HBA1c.valor),cod="HBA1c",dat=lubridate::ymd(dtindex)) %>% filter(val>0) )
+######################################################################################################################    
+
+
+#dt_temp<-dt_variables 
+
+# Preparo dades 
+# Afegeixo info afegint dades (situacio,dtindex,dtafi) , i HBA1c baseline
+
+
+#dt_temp<-
+#  dt_temp %>% 
+#  right_join(select(dades,CIP,situacio,dtindex,datafi,EV.TBC), by="CIP")
+
+#library("lubridate")
+
+# Actualitzo event i datafi
+
+#dt_temp<-
+#  dt_temp %>% 
+#  mutate(TBC= ifelse(is.na(EV.TBC) , 0, 1)) %>% 
+#  mutate(situacio= ifelse(TBC==1 ,"TBC" , situacio)) %>% 
+#  mutate(datafi=ifelse(TBC==1,EV.TBC,datafi)) %>% 
+#  mutate(datafi=as_date(datafi)) %>%
+#  mutate(idp=CIP)
+  
+
+#dades_long<-dt_temp
+#dades_long<-dades_long%>%filter(!is.na(val))
+
+
+
+
+
+
+
+
+
+```
+
+```{r MODEL1, include=TRUE,eval = TRUE}
+
+#dt_variables2 (rai)
+#dades_long    (jordi)
+
 
 # mirar la dataIndex??? Demà!!
 
@@ -399,13 +484,23 @@ dt_variables2<-dt_variables2%>%arrange(cod ,dat)
 
 # aliquem la funcio , dades Rai!
 
-analitiques_temps<-Analitica_Temps(
+analitiques_temps_rai<-Analitica_Temps2(
   dt=dt_variables2 ,  
   grup="HBA1c",
   dataini="dat",
   datasort="datafi",
   endpt="situacio",
   bd.dindex="dtindex" )
+
+analitiques_temps_jordi<-Analitica_Temps(
+  dt=dades_long ,  
+  grup="HBA1c",
+  dataini="dat",
+  datasort="datafi",
+  endpt="situacio",
+  bd.dindex="dtindex" )
+
+
 
 
 
@@ -462,11 +557,6 @@ analitiques_temps2<-analitiques_temps2 %>% mutate(edat_CAT=case_when(edat<75 ~ "
 
 
 
-
-
-```
-
-```{r MODEL1, include=F,eval = FALSE}
 
 #############
 #[26.3.2021]#
