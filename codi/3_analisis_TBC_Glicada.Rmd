@@ -906,15 +906,27 @@ sjPlot::tab_model(fit)
 
 
 ```
+
+
 ```{r, eval=FALSE}
 
+
+
 fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
+#sjPlot::tab_model(fit)
 
 dades_long<-dades_long %>% mutate(temps=tstop-tstart)  
 fit2 <- coxph(Surv(temps, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit2)
+#sjPlot::tab_model(fit2)
 
+
+
+dades_long2<-dades_long%>%select(idp,tstart,tstop,temps,situacio,val_7_5)
+
+fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long2)
+#sjPlot::tab_model(fit3)
+fit4 <- coxph(Surv(tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long2)
+#
 
 
 ```
