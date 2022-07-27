@@ -504,8 +504,8 @@ dt_agencia %>% select(DIABETES2CAT, DIABETIS)
 dt_agencia$DIABETIS %>% table()
 dt_agencia$DIABETES2CAT %>% table()
 PP<-dt_agencia %>% filter(DIABETIS=="Si") 
-dt_48TBC<-porca %>% select(CIP)
-dt_48TBC %>% mutate(DM=1) %>% left_join(select(PP,CIP,DIABETIS))
+#dt_48TBC<-porca %>% select(CIP)
+#dt_48TBC %>% mutate(DM=1) %>% left_join(select(PP,CIP,DIABETIS))
 
 ```
 
@@ -914,6 +914,14 @@ sjPlot::tab_model(fit)
 
 fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
 #sjPlot::tab_model(fit)
+
+fitB <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 ,data=dades_long)
+
+fit
+fitB
+
+
+
 
 dades_long<-dades_long %>% mutate(temps=tstop-tstart)  
 fit2 <- coxph(Surv(temps, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
