@@ -1012,22 +1012,23 @@ cox.zph(fit3)
 
 fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + cluster(idp),data=dades_long)
 sjPlot::tab_model(fit4)
+cox.zph(fit4)
 
 fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + cluster(idp),data=dades_long)
 sjPlot::tab_model(fit5)
+cox.zph(fit5)
 
-
-fit1
-fit2
-fit3
-fit4
-fit5
+#fit1
+#fit2
+#fit3
+#fit4
+#fit5
 
 
 ```
 
 
-```{r, eval=FALSE}
+```{r, comprovacio, eval=FALSE}
 
 
 
