@@ -421,6 +421,115 @@ Analitica_Temps<-function(
 
 
 
+Analitica_Temps2<-function(
+  dt=dt_variables2 ,  
+  grup="HBA1c",
+  dataini="dat",
+  datasort="datafi",
+  endpt="situacio",
+  bd.dindex="dtindex") {
+  
+  
+  
+  
+  
+  
+  #dt=dt_variables  
+  #grup="HBA1c"
+  #dataini="dat"
+  #datasort="datafi"
+  #endpt="situacio"
+  #bd.dindex="dtindex"
+  
+  
+  dt<-dt %>%
+    select(idp,cod=cod,val=val,dat=sym(!!dataini),datafi=sym(!!datasort),situacio=sym(!!endpt),dtindex=sym(!!bd.dindex)) %>% 
+    filter(cod==!!grup) %>% 
+    mutate(dtindex=lubridate::ymd(dtindex)) %>% 
+    arrange(idp,dat) %>% 
+    filter(dat>=dtindex) %>% 
+    filter(datafi>=0)
+  
+  # #
+  # dataini<-rlang::sym(dataini)
+  # datasort<-rlang::sym(datasort)
+  #
+  #################################################################
+  
+  
+  # print("Posem un NA, aquelles Dates inferiors , al dia Index")
+  # dt<-dt %>% mutate(dat = ifelse(dat < dtindex , NA, dat ))
+  # #
+  # print("Convertim les dates numeriques , amb dates!  ")
+  # 
+  # dt<-dt%>%mutate(dat2=as.character(!!dataini))
+  # dt<-dt%>%mutate(dat2=as.Date(dat2,"%Y%m%d"))
+  # 
+  # dt<-dt%>%mutate(dat_sort=as.character(!!datasort))
+  # dt<-dt%>%mutate(dat_sort=as.Date(dat_sort,"%Y%m%d"))
+  # 
+  #
+  
+  
+  
+  
+  
+  
+  #  #################################################################
+  #  # fem filtre nou! 27.7.2022
+  #  #
+  #  #
+  
+    dt<-dt%>%mutate(kk=datafi-dat)
+    dt$kk<-as.numeric(dt$kk)
+    dt<-dt %>%filter(kk>0)
+  
+  #  #
+  #  #
+  #  #################################################################
+  #  
+  
+  
+  
+  
+  # fins aqui BE!!!
+  print("Calculem el temps!!!")
+  dt<-dt %>% 
+    dplyr::group_by(idp) %>% mutate(T1=dat-lag(dat)) %>% ungroup() %>% 
+    mutate(T1 = ifelse(T1==0 | is.na(T1) , 0, T1))
+  
+  #
+  print("tstart=temps inicial acumulatiu!")
+  dt<-dt %>% group_by(idp) %>% mutate(tstart = cumsum(T1)) %>% ungroup() 
+  #
+  print("tstop=temps final acumulatiu!, comptant la data final!")
+  dt<- dt %>% group_by(idp)%>%mutate(tstop=lead(tstart))%>%ungroup() 
+  
+  #
+  dt<- dt %>% mutate_at(vars( starts_with("tstop") ), funs( if_else(is.na(.) ,(datafi - dat) + tstart,tstop)))
+  #
+  print("Base de Dades, preparada, per fer un models amb variables dependents del temps")
+  dt<-dt %>% filter(tstop>0) %>% select(-T1,-dat,-datafi)
+  
+  #################################################################
+  #24.3.2021
+  
+  dt$tstop<-as.numeric(dt$tstop)
+  
+  #################################################################
+  #25.3.2021
+  
+  dt<-dt %>% 
+    mutate (kk=ifelse(idp==lead(idp),0,1)) %>% 
+    mutate(situacio=ifelse(kk==1,situacio,"A")) %>% 
+    select(-kk)
+  
+  #
+  ##################################################################
+  
+  #
+  dt
+}
 
 
 

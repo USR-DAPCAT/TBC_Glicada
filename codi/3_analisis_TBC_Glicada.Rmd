@@ -615,6 +615,9 @@ dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
 
 ## Cambio format de dades per fer time depend models
 
+#GUJA033071500#
+
+
 # Llegir dades 
 dt_variables<-
   readRDS(here::here("dades","dt_variables.rds")) %>% 
@@ -654,14 +657,123 @@ dt_temp<-
 dades_long<-dt_temp
 dades_long<-dades_long %>% filter(!is.na(val))
 
+
+
+
+
+
+
+
+#prova<-dades_long%>%filter((CIP=="GUJA033071500" | 
+#                            CIP=="AAAO141052000" | 
+#                            CIP=="PERU061052700" | 
+#                            CIP=="GAFE034052000") & cod=="HBA1c") %>%arrange(CIP,cod,dat)#
+#
+#
+#
+#   dt=prova  
+#   grup="HBA1c"
+#   dataini="dat"
+#   datasort="datafi"
+#   endpt="situacio"
+#   bd.dindex="dtindex"
+#  
+#
+#  dt<-dt %>%
+#    select(idp,cod=cod,val=val,dat=sym(!!dataini),datafi=sym(!!datasort),situacio=sym(!!endpt),dtindex=sym(!!bd.dindex)) %>% 
+#    filter(cod==!!grup) %>% 
+#    mutate(dtindex=lubridate::ymd(dtindex)) %>% 
+#    arrange(idp,dat) %>% 
+#    filter(dat>=dtindex) %>% 
+#    filter(datafi>=0)
+#  
+#  
+#  #################################################################
+#  # fem filtre nou! 27.7.2022
+#  #
+#  #
+#  dt<-dt%>%mutate(kk=datafi-dat)
+#  dt$kk<-as.numeric(dt$kk)
+#  dt<-dt %>%filter(kk>=0)
+#  #
+#  #
+#  #################################################################
+#  
+#  
+#  
+#
+#  #
+#  # fins aqui BE!!!
+#  print("Calculem el temps!!!")
+#  dt<-dt %>% 
+#    dplyr::group_by(idp) %>% mutate(T1=dat-lag(dat)) %>% ungroup() %>% 
+#    mutate(T1 = ifelse(T1==0 | is.na(T1) , 0, T1))
+#  
+#  #
+#  print("tstart=temps inicial acumulatiu!")
+#  dt<-dt %>% group_by(idp) %>% mutate(tstart = cumsum(T1)) %>% ungroup() 
+#  #
+#  print("tstop=temps final acumulatiu!, comptant la data final!")
+#  dt<- dt %>% group_by(idp)%>%mutate(tstop=lead(tstart))%>%ungroup() 
+#  
+#  #
+#  dt<- dt %>% mutate_at(vars( starts_with("tstop") ), funs( if_else(is.na(.) ,(datafi - dat) + tstart,tstop)))
+#  #
+#  print("Base de Dades, preparada, per fer un models amb variables dependents del temps")
+#  dt<-dt %>% filter(tstop>0) %>% select(-T1,-dat,-datafi)
+#  
+#  #################################################################
+#  #24.3.2021
+#  
+#  dt$tstop<-as.numeric(dt$tstop)
+#  
+#  #################################################################
+#  #25.3.2021
+#  
+#  dt<-dt %>% 
+#    mutate (kk=ifelse(idp==lead(idp),0,1)) %>% 
+#    mutate(situacio=ifelse(kk==1,situacio,"A")) %>% 
+#    select(-kk)
+#  
+#  #
+#  ##################################################################
+#
+#  #
+#  dt
+
+
+
+
+
+
+# Reestructuro dades a partir de la funció
+#dades_long<-
+#  dades_long %>% 
+#  Analitica_Temps(grup="HBA1c",
+#                    dataini="dat",
+#                    datasort="datafi",
+#                    endpt="situacio",
+#                    bd.dindex="dtindex")
+
+
+
+
 # Reestructuro dades a partir de la funció
 dades_long<-
   dades_long %>% 
-  Analitica_Temps(grup="HBA1c",
+  Analitica_Temps2(grup="HBA1c",
                     dataini="dat",
                     datasort="datafi",
                     endpt="situacio",
                     bd.dindex="dtindex")
+
+
+
+
+
+
+
+
 
 ```
 
@@ -684,6 +796,7 @@ dades_long<-
   mutate(event_tbc=if_else(situacio=="TBC",1,0)) %>% 
   mutate(anys_lliure_tbc=(tstop-tstart)/365.25) 
   
+
 
 ```
 
@@ -885,24 +998,30 @@ Amb aquestes variables em poses els HR, IC i p, per poder fer el forest plot de 
 
 # dades_long$sexe
 # dades_long$age
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
-cox.zph(fit)
+fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
+sjPlot::tab_model(fit1)
+cox.zph(fit1)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
-cox.zph(fit)
+fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + cluster(idp),data=dades_long)
+sjPlot::tab_model(fit2)
+cox.zph(fit2)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
+fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + cluster(idp),data=dades_long)
+sjPlot::tab_model(fit3)
+cox.zph(fit3)
 
-cox.zph(fit)
+fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + cluster(idp),data=dades_long)
+sjPlot::tab_model(fit4)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
+fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + cluster(idp),data=dades_long)
+sjPlot::tab_model(fit5)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit)
+
+fit1
+fit2
+fit3
+fit4
+fit5
 
 
 ```
@@ -914,28 +1033,64 @@ sjPlot::tab_model(fit)
 
 fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
 #sjPlot::tab_model(fit)
-
 fitB <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 ,data=dades_long)
+#sjPlot::tab_model(fitB)
 
-fit
-fitB
+#sjPlot::tab_model(fitB)
 
+#########################
+#1#GUJA033071500
+#2#ZAID052082000
+#3#DUME056101500
+#4#KHAN156061700
+#5#BIBI172122100
+#6#KHAL065010104
+#7#GAFE034052000
+#8#MAFE036051600
+#9#REHN164110100
+#10#GHUM065050100
+#11#GAAG071081600
+#12#PRRA034082400
+#13#RAZZ055010200
+#14#KHAN070042000
+#15#ASLA068010100
+#16#HANI079091500
+#17#BABI156010101
+#18#KAHA151010100
+#19#PERU061052700
+#20#LLVE169031400
+#21#RAFI076020600
+#22#MUHA057071200
+#23#BAMA057032600
+####################
 
 
 
 dades_long<-dades_long %>% mutate(temps=tstop-tstart)  
 fit2 <- coxph(Surv(temps, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
-#sjPlot::tab_model(fit2)
+sjPlot::tab_model(fit2)
 
 
 
-dades_long2<-dades_long%>%select(idp,tstart,tstop,temps,situacio,val_7_5)
 
-fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long2)
+#dades_long2<-dades_long%>%select(idp,tstart,tstop,temps,situacio,val_7_5)
+#fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long2)
 #sjPlot::tab_model(fit3)
-fit4 <- coxph(Surv(tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long2)
-#
 
+#fit
+#fitB
+#fit2
+
+
+
+# Hi hagut un error de filtres, no podia ser que tinguèssim tstart>=tfinal, no haviem acotat la matriu , per la
+#la DataFinal, la data final Estudi! ( canvi, mort o Tbc!!).
+
+# sempre hem d'aplicar coxph(Surv(tstart,tstop,situacio=="TBC", no cal posar Cluster!!!))
+
+
+fit
+fit2
 
 ```
 
