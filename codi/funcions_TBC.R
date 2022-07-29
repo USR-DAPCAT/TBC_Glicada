@@ -430,16 +430,12 @@ Analitica_Temps2<-function(
   bd.dindex="dtindex") {
   
   
-  
-  
-  
-  
-  #dt=dt_variables  
-  #grup="HBA1c"
-  #dataini="dat"
-  #datasort="datafi"
-  #endpt="situacio"
-  #bd.dindex="dtindex"
+  # dt=dades_long
+  # grup="HBA1c"
+  # dataini="dat"
+  # datasort="datafi"
+  # endpt="situacio"
+  # bd.dindex="dtindex"
   
   
   dt<-dt %>%
@@ -449,6 +445,9 @@ Analitica_Temps2<-function(
     arrange(idp,dat) %>% 
     filter(dat>=dtindex) %>% 
     filter(datafi>=0)
+  
+  
+  # dt %>% filter(situacio=="TBC") %>% distinct(idp)
   
   # #
   # dataini<-rlang::sym(dataini)
@@ -471,10 +470,6 @@ Analitica_Temps2<-function(
   #
   
   
-  
-  
-  
-  
   #  #################################################################
   #  # fem filtre nou! 27.7.2022
   #  #
@@ -482,9 +477,9 @@ Analitica_Temps2<-function(
   
     dt<-dt%>%mutate(kk=datafi-dat)
     dt$kk<-as.numeric(dt$kk)
-    dt<-dt %>%filter(kk>0)
+    dt<-dt %>%filter(kk>=0)
   
-  #  #
+     ##
   #  #
   #  #################################################################
   #  
@@ -508,6 +503,7 @@ Analitica_Temps2<-function(
   #
   dt<- dt %>% mutate_at(vars( starts_with("tstop") ), funs( if_else(is.na(.) ,(datafi - dat) + tstart,tstop)))
   #
+  
   print("Base de Dades, preparada, per fer un models amb variables dependents del temps")
   dt<-dt %>% filter(tstop>0) %>% select(-T1,-dat,-datafi)
   
@@ -530,8 +526,6 @@ Analitica_Temps2<-function(
   #
   dt
 }
-
-
 
 
 

@@ -59,6 +59,18 @@ title: "Diabetes y Tuberculosis en Ciutat Vella (Barcelona). Estudio longitudina
   
 ## Actualizaciones 
   
+  
+>29/07/2022
+
+- Consideració final de seguiment Trasllat amb corresponents canvis i calculs
+- Recalculades taxes d'incidencia temps-dependent
+- Recalculada taula 2, amb valors HbA1c més propers durant seguiment a TBC  (menys missings)
+- Comparativa Grups HbA1c<9% versus HbA1c >=9
+- Figura 1
+- Figura 2
+- Models eliminat Microvascular per falta de casos
+
+  
 >24/07/2022
 
 - Recalculades taxes d'incidencia temps-dependent
@@ -621,7 +633,8 @@ dades<-dades %>% mutate(status=if_else(event_tbc==1,"Event",censura_tipo))
 # Llegir dades 
 dt_variables<-
   readRDS(here::here("dades","dt_variables.rds")) %>% 
-  semi_join(select(dades,CIP),by="CIP")
+  semi_join(select(dades,CIP),by="CIP") %>% 
+  filter(cod=="HBA1c")
 
 # Depurar dades long
 # HBA1C entre c(3-20)
@@ -655,112 +668,13 @@ dt_temp<-
 
 
 dades_long<-dt_temp
-dades_long<-dades_long %>% filter(!is.na(val))
+dt_temp2<-dades_long %>% filter(!is.na(val))
 
 
 
-
-
-
-
-
-#prova<-dades_long%>%filter((CIP=="GUJA033071500" | 
-#                            CIP=="AAAO141052000" | 
-#                            CIP=="PERU061052700" | 
-#                            CIP=="GAFE034052000") & cod=="HBA1c") %>%arrange(CIP,cod,dat)#
-#
-#
-#
-#   dt=prova  
-#   grup="HBA1c"
-#   dataini="dat"
-#   datasort="datafi"
-#   endpt="situacio"
-#   bd.dindex="dtindex"
-#  
-#
-#  dt<-dt %>%
-#    select(idp,cod=cod,val=val,dat=sym(!!dataini),datafi=sym(!!datasort),situacio=sym(!!endpt),dtindex=sym(!!bd.dindex)) %>% 
-#    filter(cod==!!grup) %>% 
-#    mutate(dtindex=lubridate::ymd(dtindex)) %>% 
-#    arrange(idp,dat) %>% 
-#    filter(dat>=dtindex) %>% 
-#    filter(datafi>=0)
-#  
-#  
-#  #################################################################
-#  # fem filtre nou! 27.7.2022
-#  #
-#  #
-#  dt<-dt%>%mutate(kk=datafi-dat)
-#  dt$kk<-as.numeric(dt$kk)
-#  dt<-dt %>%filter(kk>=0)
-#  #
-#  #
-#  #################################################################
-#  
-#  
-#  
-#
-#  #
-#  # fins aqui BE!!!
-#  print("Calculem el temps!!!")
-#  dt<-dt %>% 
-#    dplyr::group_by(idp) %>% mutate(T1=dat-lag(dat)) %>% ungroup() %>% 
-#    mutate(T1 = ifelse(T1==0 | is.na(T1) , 0, T1))
-#  
-#  #
-#  print("tstart=temps inicial acumulatiu!")
-#  dt<-dt %>% group_by(idp) %>% mutate(tstart = cumsum(T1)) %>% ungroup() 
-#  #
-#  print("tstop=temps final acumulatiu!, comptant la data final!")
-#  dt<- dt %>% group_by(idp)%>%mutate(tstop=lead(tstart))%>%ungroup() 
-#  
-#  #
-#  dt<- dt %>% mutate_at(vars( starts_with("tstop") ), funs( if_else(is.na(.) ,(datafi - dat) + tstart,tstop)))
-#  #
-#  print("Base de Dades, preparada, per fer un models amb variables dependents del temps")
-#  dt<-dt %>% filter(tstop>0) %>% select(-T1,-dat,-datafi)
-#  
-#  #################################################################
-#  #24.3.2021
-#  
-#  dt$tstop<-as.numeric(dt$tstop)
-#  
-#  #################################################################
-#  #25.3.2021
-#  
-#  dt<-dt %>% 
-#    mutate (kk=ifelse(idp==lead(idp),0,1)) %>% 
-#    mutate(situacio=ifelse(kk==1,situacio,"A")) %>% 
-#    select(-kk)
-#  
-#  #
-#  ##################################################################
-#
-#  #
-#  dt
-
-
-
-
-
-
-# Reestructuro dades a partir de la funció
-#dades_long<-
-#  dades_long %>% 
-#  Analitica_Temps(grup="HBA1c",
-#                    dataini="dat",
-#                    datasort="datafi",
-#                    endpt="situacio",
-#                    bd.dindex="dtindex")
-
-
-
-
-# Reestructuro dades a partir de la funció
-dades_long<-
-  dades_long %>% 
+# Reestructuro dades a partir de la funció pel model 
+dades_long_model<-
+  dt_temp2 %>% 
   Analitica_Temps2(grup="HBA1c",
                     dataini="dat",
                     datasort="datafi",
@@ -768,14 +682,18 @@ dades_long<-
                     bd.dindex="dtindex")
 
 
-
-
-
-
-
+# Reestructuro dades a partir de la funció per la descriptiva 
+dades_long<-
+  dt_temp2 %>% 
+  Analitica_Temps(grup="HBA1c",
+                    dataini="dat",
+                    datasort="datafi",
+                    endpt="situacio",
+                    bd.dindex="dtindex")
 
 
 ```
+
 
 
 ```{r prep_dades_long}
@@ -790,15 +708,29 @@ dades_long<-dades_long %>% left_join(select(dades,-c(situacio,dtindex)),by=c("id
 
 
 # Actualitzao event (event_tbc) i temps de seguiment per trocet (anys_lliure_tbc)
-
 dades_long<-
   dades_long %>%  
   mutate(event_tbc=if_else(situacio=="TBC",1,0)) %>% 
-  mutate(anys_lliure_tbc=(tstop-tstart)/365.25) 
+  mutate(anys_lliure_tbc=(tstop-tstart)/365.25) %>% 
+  mutate(anys_lliure_tbc=if_else(tstart>tstop,0,anys_lliure_tbc))
   
+
+################### Dades long model
+
+dades_long_model<-dades_long_model %>% mutate(val_7_5 = ifelse(val<7.5    , 0, 1))
+dades_long_model<-dades_long_model %>% mutate(val_8 =   ifelse(val<8      , 0, 1))
+dades_long_model<-dades_long_model %>% mutate(val_9 =   ifelse(val<9      , 0, 1))
+dades_long_model<-dades_long_model %>% mutate(val_cat = cut2(val,cuts=c(7.5,8,9)))
+
+# Adjunto dades baselines
+dades_long_model<-dades_long_model %>% left_join(select(dades,-c(situacio,dtindex)),by=c("idp"="CIP"))
+
+
+
 
 
 ```
+
 
 
 # Table 1. Baseline characteristics of the study variables between diabetics with and without TB
@@ -816,9 +748,8 @@ descrTable(formu,data=dades) %>% export2md()
 
 # Table 2. Characteristics TB segons grau de control de la DM 
 
-# Resultat 1
 
-## Comparativa en funció del nivell de la HbA1c basal
+## Characteristics TB segons grau de control **mes proper a TB** durant seguiment 
 
 DM amb TB (Tots)
 DM HbA1c<7.5
@@ -837,31 +768,7 @@ Variables a comparar:
 
 
 
-```{r, include=FALSE}
-
-#
-dt_temp<-
-  dades %>% filter(event_tbc==1) %>% 
-  mutate(HbA1c_7.5_mis=ifelse(is.na(HbA1c_7.5), "Unknown", HbA1c_7.5))
-
-#
-descrTable(HbA1c_7.5~ exitus + TIP_TBC + PPD+ BACTERIOL + RADIOLOGIA,
-           data = dt_temp, method = 3, show.all =  F) %>% 
-  export2md(caption = "Summary descriptives table. [DM HbA1c<7.5 versus DM HbA1c>=7.5")
-
-#
-descrTable(~ exitus + TIP_TBC + PPD + BACTERIOL + RADIOLOGIA,
-           data = dt_temp, method = 3, show.all =  T) %>% 
-  export2md(caption = "Summary descriptives table. DM amb TB (Tots)")
-
-
-```
-
-# Table 2.3 Characteristics TB segons grau de control **mes proper a TB** durant seguiment 
-
-## Idem taula anterior però amb HbA1c més propera a la TB
-
-
+**Grups HbA1c<7.5% versus HbA1c >=7.5%**
 
 ```{r, include=TRUE}
 
@@ -873,7 +780,7 @@ dt_temp<-
 dt_temp<-dt_temp %>% mutate(val_7_5=factor(val_7_5,levels=c(0,1), labels=c("HbA1c<7,5%","HbA1c >=7.5%")))
 
 #
-descrTable(val_7_5~ TIP_TBC + PPD+ BACTERIOL + RADIOLOGIA,
+descrTable(val_7_5~ TIP_TBC + PPD+ BACTERIOL + RADIOLOGIA + FP_TRACTAMENT_AD,
            data = dt_temp, method = 3, show.all =  F) %>% 
   export2md(caption = "Summary descriptives table. [DM HbA1c<7.5 versus DM HbA1c>=7.5")
 
@@ -883,67 +790,43 @@ dt_temp<-
   mutate(HbA1c_7.5_mis=ifelse(is.na(HbA1c_7.5), "Unknown", HbA1c_7.5))
 
 #
-descrTable(~ TIP_TBC + PPD + BACTERIOL + RADIOLOGIA,
+descrTable(~ TIP_TBC + PPD + BACTERIOL + RADIOLOGIA + FP_TRACTAMENT_AD,
            data = dt_temp, method = 3, show.all =  T) %>% 
   export2md(caption = "Summary descriptives table. DM amb TB (Tots)")
 
 
+
+# FP_TRACTAMENT_AD
+
+
+
 ```
 
+**Grups HbA1c<9% versus HbA1c >=9**
+
+```{r, include=TRUE}
 
 
+dt_temp<-dades_long %>% filter(event_tbc==1) %>% 
+  mutate(val_9=factor(val_9,levels=c(0,1), labels=c("HbA1c<9%","HbA1c >=9%")))
+
+#
+descrTable(val_9~ TIP_TBC + PPD+ BACTERIOL + RADIOLOGIA + FP_TRACTAMENT_AD,
+           data = dt_temp, method = 3, show.all =  F) %>% 
+  export2md(caption = "Summary descriptives table. [DM HbA1c<9 versus DM HbA1c>=9")
+
+#
+
+
+# FP_TRACTAMENT_AD
+
+```
 
 
 
 # Resultats 2
 
-
 # Taula 3: Incidencia de TB i HR cru en DM  i segons grau de control (per 100.000 hab/any)
-
-```{r,include=T}
-
-res1<-dades %>% Resum_taxa_incidencia(evento="event_tbc",temps="anys_lliure_tbc",valorevent="1") 
-res1<-tibble::tibble(Group="Overall") %>% bind_cols(res1)
-
-res2<-dades %>% split(.$HbA1c_7.5) %>% 
-  set_names(c("HbA1c < 7,5%","HbA1c >= 7,5%")) %>% 
-  map_dfr(~Resum_taxa_incidencia(.x,evento="event_tbc",temps="anys_lliure_tbc",valorevent="1"),.id = "Group") 
-
-taula_incidencies<-res1 %>% bind_rows(res2) 
-
-
-# extreure HR cru i ajustat
-res1<-
-  formulaCOX(a="HbA1c_7.5",x="",event = "event_tbc",temps = "anys_lliure_tbc",taulavariables = conductor_variables) %>% 
-  survival::coxph(data=dades)  %>% 
-  parameters::model_parameters(exp=T) %>% filter(row_number()==1) %>% tibble() %>% 
-  select(HR=Coefficient,CI_low,CI_high, p) %>% 
-  mutate(Group="HbA1c >= 7,5%")
-  
-# extreure HR cru i ajustat
-vars_ajust<-"ajuste2"
-
-res2<-
-  formulaCOX(a="HbA1c_7.5",x=vars_ajust,event = "event_tbc",temps = "anys_lliure_tbc",taulavariables = conductor_variables) %>% 
-  survival::coxph(data=dades)  %>% 
-  parameters::model_parameters(exp=T) %>% filter(row_number()==1) %>% tibble() %>% 
-  select(HR=Coefficient,CI_low,CI_high, p) %>% 
-  mutate(Group="HbA1c >= 7,5%")
-
-vars<-extreure.variables(vars_ajust,taulavariables = conductor_variables) %>% paste0(collapse = ", ")
-res2<-res2 %>% mutate(ajustBy=vars)
-
-taula_incidencies %>% 
-  kable(digits = 2,caption = "Table 3. Incidencia de TB i HR cru en DM  i segons grau de control (per 100.000 hab/any)") %>%
-  kableExtra::kable_styling()
-  
-res1 %>% bind_rows(res2) %>% 
-  kable(digits = 3,caption = "Table 3. HR cru i ajustat segons grau de control") %>%
-  kableExtra::kable_styling()
-
-
-```
-
 
 
 
@@ -953,8 +836,10 @@ Aquest analisis aprofita tot l'historic de la HbA1c durant el seguiment
 
 ```{r,include=T}
 
+res0<-dades %>% Resum_taxa_incidencia_idp(evento="event_tbc",temps="anys_lliure_tbc",valorevent="1") 
+res0<-tibble::tibble(Group="All DM patients ") %>% bind_cols(res0)
 
-# Global
+# Global amb HB disponible
 res1<-dades_long %>% Resum_taxa_incidencia_idp(evento="event_tbc",temps="anys_lliure_tbc",valorevent="1") 
 res1<-tibble::tibble(Group="Overall") %>% bind_cols(res1)
 
@@ -974,9 +859,12 @@ res4<-dades_long %>% split(.$val_9) %>%
   map_dfr(~Resum_taxa_incidencia_idp(.x,evento="event_tbc",temps="anys_lliure_tbc",valorevent="1"),.id = "Group") 
 
 
-res1 %>% bind_rows(res2) %>% bind_rows(res3) %>% bind_rows(res4) %>% 
+res0 %>% bind_rows(res1) %>% bind_rows(res2) %>% bind_rows(res3) %>% bind_rows(res4) %>% 
   kable(digits = 3,caption = "Table 3. Incidencia segons grau de controls de HB") %>%
   kableExtra::kable_styling()
+
+
+
 
 
 
@@ -998,23 +886,24 @@ Amb aquestes variables em poses els HR, IC i p, per poder fer el forest plot de 
 
 # dades_long$sexe
 # dades_long$age
-fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
+fit1 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit1)
 cox.zph(fit1)
 
-fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + cluster(idp),data=dades_long)
+
+fit2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit2)
 cox.zph(fit2)
 
-fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + cluster(idp),data=dades_long)
+fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit3)
 cox.zph(fit3)
 
-fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + cluster(idp),data=dades_long)
+fit4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit4)
 cox.zph(fit4)
 
-fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + cluster(idp),data=dades_long)
+fit5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit5)
 cox.zph(fit5)
 
@@ -1028,114 +917,32 @@ cox.zph(fit5)
 ```
 
 
-```{r, comprovacio, eval=FALSE}
-
-
-
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
-#sjPlot::tab_model(fit)
-fitB <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 ,data=dades_long)
-#sjPlot::tab_model(fitB)
-
-#sjPlot::tab_model(fitB)
-
-#########################
-#1#GUJA033071500
-#2#ZAID052082000
-#3#DUME056101500
-#4#KHAN156061700
-#5#BIBI172122100
-#6#KHAL065010104
-#7#GAFE034052000
-#8#MAFE036051600
-#9#REHN164110100
-#10#GHUM065050100
-#11#GAAG071081600
-#12#PRRA034082400
-#13#RAZZ055010200
-#14#KHAN070042000
-#15#ASLA068010100
-#16#HANI079091500
-#17#BABI156010101
-#18#KAHA151010100
-#19#PERU061052700
-#20#LLVE169031400
-#21#RAFI076020600
-#22#MUHA057071200
-#23#BAMA057032600
-####################
-
-
-
-dades_long<-dades_long %>% mutate(temps=tstop-tstart)  
-fit2 <- coxph(Surv(temps, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long)
-sjPlot::tab_model(fit2)
-
-
-
-
-#dades_long2<-dades_long%>%select(idp,tstart,tstop,temps,situacio,val_7_5)
-#fit3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + cluster(idp),data=dades_long2)
-#sjPlot::tab_model(fit3)
-
-#fit
-#fitB
-#fit2
-
-
-
-# Hi hagut un error de filtres, no podia ser que tinguèssim tstart>=tfinal, no haviem acotat la matriu , per la
-#la DataFinal, la data final Estudi! ( canvi, mort o Tbc!!).
-
-# sempre hem d'aplicar coxph(Surv(tstart,tstop,situacio=="TBC", no cal posar Cluster!!!))
-
-
-fit
-fit2
-
-```
-
-
 ### a) Resultat 2a
-
 ```{r, include=TRUE}
 
 # dades_long$sexe
 # dades_long$age
 
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + sexe + age + cluster(idp),data=dades_long)
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + sexe + age + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit)
 cox.zph(fit)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + sexe + age + cluster(idp),data=dades_long)
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + sexe + age + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit)
 cox.zph(fit)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + sexe + age + cluster(idp),data=dades_long)
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + sexe + age + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit)
 cox.zph(fit)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + sexe + age + cluster(idp),data=dades_long)
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + sexe + age + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit)
 
-fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + sexe + age + cluster(idp),data=dades_long)
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + sexe + age + cluster(idp),data=dades_long_model)
 sjPlot::tab_model(fit)
 
-coxph(Surv(tstart, tstop, situacio=="TBC") ~  pspline(val) + cluster(idp),data=dades_long) %>% termplot(term=1, se=TRUE, col.term=1, col.se=1)
-
-
-# Figura 
-pp<-survfit(Surv(tstart, tstop, situacio=="TBC") ~  val_cat,data=dades_long)
-
-ggsurvplot(pp, 
-               title="Incidencia acumulada de tuberculosis por grupo",
-               p.val=T, censor=F, linetype="strata",
-               fun="event", 
-               cumevents = F,
-               risk.table = FALSE,
-               xscale=365.25,break.x.by = 365.25, conf.int = T)
-
+coxph(Surv(tstart, tstop, situacio=="TBC") ~  pspline(val) + cluster(idp),data=dades_long_model) %>% termplot(term=1, se=TRUE, col.term=1, col.se=1)
 
 
 ```
@@ -1147,32 +954,34 @@ ggsurvplot(pp,
 
 ```{r, include=T}
 
-fit<-coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + 
-             sexe + age + DM_anys + MACRO + MICRO + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
-               cluster(idp),data=dades_long)
+dt_temp<-dades_long_model
 
+
+fit<-coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + 
+             sexe + age + DM_anys + MACRO + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp)
 sjPlot::tab_model(fit)
 
 
 fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + 
-              sexe + age + DM_anys + MACRO + MICRO + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
-               cluster(idp),data=dades_long)
+              sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp)
 sjPlot::tab_model(fit)
 
 fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + 
-             sexe + age + DM_anys + MACRO + MICRO + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
-               cluster(idp),data=dades_long)
+             sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp)
 sjPlot::tab_model(fit)
 
 fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val_cat + 
-            sexe + age + DM_anys + MACRO + MICRO + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
-               cluster(idp),data=dades_long)
+            sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp)
 sjPlot::tab_model(fit)
 
 
 fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~  val + 
-          sexe + age + DM_anys + MACRO + MICRO + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
-               cluster(idp),data=dades_long)
+          sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp)
 
 sjPlot::tab_model(fit)
 
@@ -1180,210 +989,125 @@ sjPlot::tab_model(fit)
 
 
 
-
-
-# Resultats anteriors
-
-Aquí la HbA1c només s'analitza a nivell basal, per tant només inclou els pacients que la tenen a nivell basal. Per tant hi ha molts valors faltants. 
-
-## Hazard ratios ajustats según modelo completo HB en baseline
-
-- HR ajustat segons model de riscos competitius Fine & Grey HB En baseline
-
-```{r genero_HR, echo=FALSE, message=FALSE, warning=FALSE, include=T, size="huge",eval=T}
-
-# Estimació de HR complets de riscos competitius sense Clusters
-cluster=""
-
-# Ajustos
-vector_ajustos<-c("","DM_ajust","DM_ajust2","DM_ajust3","DM_ajust4") %>% 
-  stats::setNames(c("Unadjust","Model 1","Model 2","Model 3","Model 4"))  
-
-# Models de COX 
-taula_models_COX<-vector_ajustos %>% purrr::map_df(~
-                                                     extreure_HR(a="HbA1c_7",x=.x,event = "event_tbc",t="temps_tbc",d=dades,taulavariables = conductor_variables,c=cluster),.id="Model")
-# Models de Riscos Comepetitius FG
-# llista de models
-
-taula_models_FG<-
-  vector_ajustos %>% 
-  purrr::map_df(~ Estima_HR_RCrisk_clusters(dades,.x,a="HbA1c_7",failcode = "Event",cencode = "End of follow-up"),.id="Model")
-
-# dades %>% select(grup,grup2)
-# printar models
-taula_models<-taula_models_FG %>% bind_rows(taula_models_COX)
-
-
-taula_models %>% kable() %>% kableExtra::kable_classic_2()
-
-```
-
-
-## Incidencia acumulada de tuberculosis por control segun HB en baseline
-
-
-```{r figura2, include=T,eval = T}
-
-
-fit<-survfit(surv_tbc~HbA1c_7.5,data=dades) 
-
-ggsurvplot(fit, 
-               title="Figura 2.Incidencia acumulada de tuberculosis por control DM",
-               subtitle = "Estratificado por HbA1c>=7.5 ",
-               p.val=T, censor=F, linetype="strata",
-               fun="event", 
-               palette =c("#E7B800", "#2E9FDF"),
-               cumevents = F,
-               tables.height = 0.01,
-               risk.table = FALSE,xscale=365.25,break.x.by = 365.25, conf.int = T) + 
-  xlab("Tiempo en años") + 
-  ylab("") 
-
-
-fit<-survfit(surv_tbc~HbA1c_9,data=dades) 
-
-ggsurvplot(fit, 
-               title="Figura 2.Incidencia acumulada de tuberculosis por control DM",
-               subtitle = "Estratificado por HbA1c>=9 ",
-               p.val=T, censor=F, linetype="strata",
-               fun="event", 
-               palette =c("#E7B800", "#2E9FDF"),
-               cumevents = F,
-               tables.height = 0.01,
-               risk.table = FALSE,xscale=365.25,break.x.by = 365.25, conf.int = T) + 
-  xlab("Tiempo en años") + 
-  ylab("") 
-
-
-dades<-dades %>% mutate(HBA1c.valor.cat4 = cut2(HBA1c.valor,cuts=c(8,9)))
-fit<-survfit(surv_tbc~HBA1c.valor.cat4,data=dades) 
-
-
-ggsurvplot(fit, 
-               title="Figura 2.Incidencia acumulada de tuberculosis por control DM",
-               subtitle = "Estratificado por HbA1c",
-               p.val=T, censor=F, linetype="strata",
-               fun="event", 
-               cumevents = F,
-               tables.height = 0.01,
-               risk.table = FALSE,xscale=365.25,break.x.by = 365.25, conf.int = T) + 
-  xlab("Tiempo en años") + 
-  ylab("") 
-
-
-```
-
-
-
-
-
-
-## ANEXO (Modelos Cox >=7 y Modelos cox >=9 , todas las variables.)
-
-```{r anexe, include=T,eval = TRUE}
-
-# MODEL1::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_7.5
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_7.5, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final1:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-# MODEL2::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_7.5]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_7.5, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final2:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-
-# MODEL3::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_7.5]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_7.5, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final3:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-
-# MODEL4::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_7.5]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_7.5, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final4:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-# MODEL5::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.ALCOHOL_cat+IMC.valor+HbA1c_7.5]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.ALCOHOL_cat+IMC.valor+HbA1c_7.5, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final5:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-# MODEL6::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+IMC.valor+HbA1c_7.5]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+IMC.valor+HbA1c_7.5, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final6:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-
-# MODEL7::n=
-#surv_tbc ~ sexe+age+DM_anys+MACRO+HbA1c_7.5]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+HbA1c_7.5, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final6:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-#----------------------------------------
-
-
-
-
-# MODEL1::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_9
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_9, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final1:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-# MODEL2::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_9]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+MICRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_9, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final2:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-# MODEL3::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_9]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+IMC.valor+HbA1c_9, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final3:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-
-# MODEL4::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_9]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+DG.ALCOHOL_cat+HbA1c_9, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final4:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-# MODEL5::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.ALCOHOL_cat+IMC.valor+HbA1c_9]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.ALCOHOL_cat+IMC.valor+HbA1c_9, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final5:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-# MODEL6::n=
-#[surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+IMC.valor+HbA1c_9]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+DG.TAB_cat+IMC.valor+HbA1c_9, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final6:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-
-# MODEL7::n=
-#surv_tbc ~ sexe+age+DM_anys+MACRO+HbA1c_9]
-if (params$metode=="dinamica2") res.cox<-coxph(surv_tbc ~ sexe+age+DM_anys+MACRO+HbA1c_9, data=dades) 
-res.cox %>% sjPlot::tab_model(show.p = TRUE,title = "Modelo Final6:Analisis Multivariante de los factors con pacientes DM  que pueden  influir a la TBC")
-
-#----------------------------------------
-
-
-
-
-
-```
-
-
 ```{r}
 
-# Crear directoris output si no existeix
-#dir.create(here::here("dades/output"))
-#dir.create(here::here("dades/output_dinamic"))
-# dir.create(here::here("dades/output_dinamic2"))
-#dir.create(here::here("dades/output_PS"))
+dt_temp<-dades_long_model
 
-# save(dades,dt_variables,dades_long,file=here::here(dir_output,"output5.Rdata"))
+res1<-coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_7_5 + 
+             sexe + age + DM_anys + MACRO + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+                          cluster(idp),data=dt_temp) %>% 
+  parameters::parameters(exp=T) %>% filter(row_number()<2) 
+
+
+res2 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_8 + 
+              sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp) %>% 
+  parameters::parameters(exp=T) %>% filter(row_number()<2) 
+
+
+res3 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_9 + 
+              sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp) %>% 
+  parameters::parameters(exp=T) %>% filter(row_number()<2) 
+
+
+res4 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_cat + 
+              sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp) %>% 
+  parameters::parameters(exp=T) %>% filter(row_number()<4) 
+
+
+res5 <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val + 
+              sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp) %>% 
+  parameters::parameters(exp=T) %>% filter(row_number()<2) 
+
+
 
 
 
 ```
+
+
+## Incidencia acumulada de tuberculosis por control segun nivel de HBA1c
+
+**Figura 1**
+
+```{r, include=TRUE}
+
+dt_temp<-dades_long_model %>% 
+  mutate(val_grup=cut2(val,c(7.5,9)))
+
+
+dt_temp %>% group_by(val_grup) %>% summarise(min(val))
+
+fit<-survfit(Surv(tstart, tstop, situacio=="TBC") ~ val_grup,data=dt_temp) 
+
+
+
+figure1<-
+  ggsurvplot(fit, 
+               title="Figure 1. Cumulative incidence of TB depending on HbA1c level",
+               p.val=T, censor=F, linetype="strata",
+               fun="event", 
+               # palette =c("#E7B800", "#2E9FDF"),
+               cumevents = F,
+               tables.height = 0.01,
+               risk.table = FALSE,xscale=365.25,break.x.by = 365.25, conf.int = T,
+               legend.labs=c("<7.5","[7.5-9)",">=9"),
+               legend.title="HbA1c(%) group") + 
+  xlab("Time (Years)") + 
+  ylab("") 
+  
+figure1
+
+
+ggsave(here::here("figures","figura1.jpeg"),width = 10, height = 7)
+
+ggsave(here::here("figures","figura1.png"),width = 10, height = 7)
+
+
+
+```
+
+## Forest plot model complet
+
+```{r, include=TRUE}
+
+dt_temp<-dades_long_model
+
+fit <- coxph(Surv(tstart, tstop, situacio=="TBC") ~ val_cat + 
+             sexe + age + DM_anys + MACRO  + DG.TAB_cat + DG.ALCOHOL_cat + IMC.valor + 
+               cluster(idp),data=dt_temp)
+
+
+etiquetes=
+  c("HbA1c(%): [7.5, 8.0)","HbA1c(%): [8.0, 9.0)","HbA1c(%): >=9","Sex : Female","Age (Years)", "DM duration (Years)", "Macrovascular", "Smoke", "Alcohol", "BMI(Kg/m2)")
+
+figure2<-
+  fit %>% parameters::parameters(exp=T) %>%  
+  mutate(id=n():1) %>% 
+  mutate(etiquetes=etiquetes) %>% 
+  forest.plot.modelcomplet(label="etiquetes",
+                           mean="Coefficient",
+                           lower="CI_low",
+                           upper="CI_high",
+                           label_X="HR (95% CI)") + 
+  ylim(c(-5,15))+ 
+  theme_minimal() + 
+  labs(title="Figure 2. Forest plot for Coxph model", x="")
+
+
+figure2
+
+ggsave(here::here("figures","figura2.jpeg"),width = 10, height = 7)
+
+ggsave(here::here("figures","figura2.png"),width = 10, height = 7)
+
+
+
+```
+
 
 
 
